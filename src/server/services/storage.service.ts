@@ -2,7 +2,7 @@ import multer from "multer";
 import path from "path";
 import fs from "fs";
 import { promisify } from "util";
-import { MediaFile } from "../../types/artifacts";
+import type { MediaFile } from "../../types/artifacts.js";
 
 const mkdir = promisify(fs.mkdir);
 const unlink = promisify(fs.unlink);

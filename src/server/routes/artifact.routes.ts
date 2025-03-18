@@ -1,6 +1,6 @@
 import { Router } from "express";
-import { artifactController } from "../controllers/artifact.controller";
-import { validateArtifact } from "../middleware/validation.middleware";
+import { artifactController } from "../controllers/artifact.controller.js";
+import { validateArtifact } from "../middleware/validation.middleware.js";
 
 const router = Router();
 const upload = artifactController.getUploader();
@@ -38,4 +38,4 @@ router.put(
 // Delete artifact and its associated files
 router.delete("/:id", artifactController.deleteArtifact);
 
-export const artifactRoutes = router;
+export { router as artifactRoutes };

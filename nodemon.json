@@ -2,5 +2,5 @@
   "watch": ["src/server"],
   "ext": ".ts,.js",
   "ignore": [],
-  "exec": "ts-node ./src/server/index.ts"
+  "exec": "cross-env NODE_ENV=development TS_NODE_PROJECT=./tsconfig.server.json node --loader ts-node/esm src/server/index.ts"
 }

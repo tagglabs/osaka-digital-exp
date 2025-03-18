@@ -1,10 +1,10 @@
 import { Request, Response } from "express";
-import { ArtifactModel } from "../models/artifact.model";
-import { StorageService } from "../services/storage.service";
-import {
+import { ArtifactModel } from "../models/artifact.model.js";
+import { StorageService } from "../services/storage.service.js";
+import type {
   CreateArtifactDTO,
   UpdateArtifactDTO,
-} from "../../types/artifacts";
+} from "../../types/artifacts.js";
 
 class ArtifactController {
   private storageService: StorageService;

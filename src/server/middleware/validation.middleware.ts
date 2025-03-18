@@ -1,8 +1,8 @@
 import { Request, Response, NextFunction } from "express";
-import {
+import type {
   CreateArtifactDTO,
   UpdateArtifactDTO,
-} from "../../types/artifacts";
+} from "../../types/artifacts.js";
 
 export const validateArtifact = (
   req: Request,

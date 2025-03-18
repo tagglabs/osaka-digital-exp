@@ -1,5 +1,5 @@
 import mongoose, { Document, Schema } from "mongoose";
-import { Artifact } from "../../types/artifacts";
+import type { Artifact } from "../../types/artifacts.js";
 
 // Create interface for Mongoose document
 // Omit _id from Artifact since it will be provided by Document
