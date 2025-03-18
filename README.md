@@ -1,54 +1,104 @@
-# React + TypeScript + Vite
+# Osaka Digital Experience
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A digital artifacts management system with CMS capabilities.
 
-Currently, two official plugins are available:
+## Features
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react/README.md) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+- Artifact management with rich content support
+- File uploads (images, videos, documents)
+- Media gallery management
+- RESTful API with TypeScript support
+- MongoDB integration
+- Local file storage (with future AWS S3 support)
 
-## Expanding the ESLint configuration
+## Setup
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+1. Install dependencies:
 
-```js
-export default tseslint.config({
-  extends: [
-    // Remove ...tseslint.configs.recommended and replace with this
-    ...tseslint.configs.recommendedTypeChecked,
-    // Alternatively, use this for stricter rules
-    ...tseslint.configs.strictTypeChecked,
-    // Optionally, add this for stylistic rules
-    ...tseslint.configs.stylisticTypeChecked,
-  ],
-  languageOptions: {
-    // other options...
-    parserOptions: {
-      project: ['./tsconfig.node.json', './tsconfig.app.json'],
-      tsconfigRootDir: import.meta.dirname,
-    },
-  },
-})
+```bash
+npm install
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+2. Configure environment variables:
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+- Copy `.env.example` to `.env.local`
+- Update the variables as needed
 
-export default tseslint.config({
-  plugins: {
-    // Add the react-x and react-dom plugins
-    'react-x': reactX,
-    'react-dom': reactDom,
-  },
-  rules: {
-    // other rules...
-    // Enable its recommended typescript rules
-    ...reactX.configs['recommended-typescript'].rules,
-    ...reactDom.configs.recommended.rules,
-  },
-})
+3. Start MongoDB:
+
+- Make sure MongoDB is running locally on port 27017
+- Or update MONGODB_URI in .env.local to point to your MongoDB instance
+
+4. Run the development servers:
+
+```bash
+npm run dev         # Runs both frontend and backend
+npm run dev:frontend # Runs only frontend
+npm run dev:backend  # Runs only backend
 ```
+
+## API Endpoints
+
+### Artifacts
+
+```
+GET /api/artifacts
+- Get all artifacts
+- Returns: Array of artifacts
+
+GET /api/artifacts/:id
+- Get single artifact
+- Returns: Artifact object
+
+POST /api/artifacts
+- Create new artifact
+- Body: {
+    zoneName: string
+    nameOfArtifact: string
+    briefDescription: string
+    sections: Array<{ title: string, content: string }>
+    profilePicture?: File
+    images?: File[]
+    videos?: File[]
+    uploads?: File[]
+  }
+
+PUT /api/artifacts/:id
+- Update artifact
+- Body: Same as POST but all fields optional
+
+DELETE /api/artifacts/:id
+- Delete artifact and associated files
+```
+
+## Development
+
+### Project Structure
+
+```
+src/
+├── server/           # Backend
+│   ├── controllers/  # Request handlers
+│   ├── middleware/   # Express middleware
+│   ├── models/      # MongoDB models
+│   ├── routes/      # API routes
+│   └── services/    # Business logic
+├── types/           # Shared TypeScript types
+└── client/          # Frontend (React + Vite)
+```
+
+### Available Scripts
+
+- `npm run dev` - Start development servers
+- `npm run build` - Build for production
+- `npm run build:backend` - Build backend only
+- `npm run lint` - Run ESLint
+- `npm start` - Run production server
+
+## Future Improvements
+
+- AWS S3 integration for file storage
+- Image optimization and processing
+- Search functionality
+- Authentication and authorization
+- Rate limiting and security measures
