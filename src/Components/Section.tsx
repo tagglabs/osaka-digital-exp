@@ -1,73 +1,36 @@
 import { Input } from "./Input";
+import { Button } from "./Button";
 import { forwardRef } from "react";
 
-export type SubSection = {
+export type Section = {
   title: string;
   content: string;
 };
 
-export type SectionData = {
-  overview: SubSection;
-  historicalSignificance: SubSection;
-  conditionConservation: SubSection;
-  references: SubSection;
-};
-
-type SubSectionType = keyof SectionData;
-
-const SECTION_TABS: SubSectionType[] = [
-  "overview",
-  "historicalSignificance",
-  "conditionConservation",
-  "references"
-];
-
-const SECTION_TAB_LABELS: Record<SubSectionType, string> = {
-  overview: "Overview",
-  historicalSignificance: "Historical Significance",
-  conditionConservation: "Condition & Conservation",
-  references: "References"
-};
-
 interface SectionProps {
-  index: number;
-  isActive?: boolean;
-  activeSubSection: SubSectionType;
-  sectionData: SectionData;
-  onTabClick?: () => void;
-  onSubSectionClick: (subSection: SubSectionType) => void;
-  onChange: (title: string, content: string) => void;
+  sections: Section[];
+  activeSection: number;
+  onChange: (index: number, title: string, content: string) => void;
+  onAdd: () => void;
   error?: string;
 }
 
 export const Section = forwardRef<HTMLDivElement, SectionProps>(({
-  isActive = false,
-  activeSubSection,
-  sectionData,
-  onTabClick,
-  onSubSectionClick,
+  sections,
+  activeSection,
   onChange,
+  onAdd,
   error,
   ...props
 }, ref) => {
-  const currentSubSection = sectionData[activeSubSection];
-
-  const handleTitleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    onChange(e.target.value, currentSubSection.content);
-  };
-
-  const handleContentChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    onChange(currentSubSection.title, e.target.value);
-  };
-
   return (
     <div className="w-full flex gap-10" ref={ref} {...props}>
       <div className="w-1/2 flex flex-col gap-2">
         <Input
           label="Enter section title"
           placeholder="Enter"
-          value={currentSubSection.title}
-          onChange={handleTitleChange}
+          value={sections[activeSection]?.title || ""}
+          onChange={(e) => onChange(activeSection, e.target.value, sections[activeSection]?.content || "")}
           error={error}
         />
         <div className="flex flex-col gap-1">
@@ -80,8 +43,8 @@ export const Section = forwardRef<HTMLDivElement, SectionProps>(({
             } rounded-md py-1 px-2`}
             placeholder="Enter"
             rows={8}
-            value={currentSubSection.content}
-            onChange={handleContentChange}
+            value={sections[activeSection]?.content || ""}
+            onChange={(e) => onChange(activeSection, sections[activeSection]?.title || "", e.target.value)}
           />
           {error && (
             <span className="text-xs text-red-500">{error}</span>
@@ -89,20 +52,27 @@ export const Section = forwardRef<HTMLDivElement, SectionProps>(({
         </div>
       </div>
       <div className="w-1/2 h-full pt-6 flex flex-col gap-1">
-        {SECTION_TABS.map((tab) => (
+        {sections.map((section, index) => (
           <button
-            key={tab}
-            onClick={() => onSubSectionClick(tab)}
+            key={index}
+            onClick={() => onChange(index, sections[index].title, sections[index].content)}
             type="button"
-            className={`w-full rounded-md py-2 px-2 ${
-              activeSubSection === tab 
-                ? "border-2 border-gray-primary font-bold text-black" 
+            className={`w-full rounded-md py-2 px-2 text-left ${
+              activeSection === index
+                ? "border-2 border-gray-primary font-bold text-black"
                 : "bg-gray-secondary text-gray-primary"
             }`}
           >
-            {SECTION_TAB_LABELS[tab]}
+            {section.title || "Untitled"}
           </button>
         ))}
+        <div className="mt-2">
+          <Button
+            placeholder="Add New Section"
+            onClick={onAdd}
+            type="button"
+          />
+        </div>
       </div>
     </div>
   );
