@@ -30,8 +30,8 @@ const artifactSchema = new Schema(
   {
     zoneName: { type: String, required: true },
     nameOfArtifact: { type: String, required: true },
-    briefDescription: { type: String, required: true },
-    profilePicture: { type: String },
+    briefDescription: { type: String },
+    profilePicture: { type: String, required: true },
     sections: [sectionSchema],
     uploads: [fileUploadSchema],
     mediaGallery: mediaGallerySchema,
