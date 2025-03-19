@@ -26,3 +26,8 @@
   --color-gray-primary: #797878;
   --color-gray-secondary: #f1f1f1;
 }
+
+@theme {
+  --color-gray-primary: #797878;
+  --color-gray-secondary: #f1f1f1;
+}
