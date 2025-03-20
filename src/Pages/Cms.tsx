@@ -145,6 +145,22 @@ function CMS() {
       url: data.url,
     };
     console.log("Form submitted:", formData);
+    // Send form data to server
+
+    fetch("/api/artifacts", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(formData),
+    })
+      .then((response) => response.json())
+      .then((data) => {
+        console.log("Success:", data);
+      })
+      .catch((error) => {
+        console.error("Error:", error);
+      });
   };
   const addNewSection = () => {
     const newSections = [
