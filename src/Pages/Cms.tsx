@@ -1,7 +1,7 @@
 import { Button } from "../Components/Button";
 import { Dropzone } from "../Components/Dropzone";
 import { Input } from "../Components/Input";
-import { Section, SectionData, SubSection } from "../Components/Section";
+import { Section } from "../Components/Section";
 import { SelectFileType } from "../Components/SelectFileType";
 import { UploadPreview } from "../Components/UploadPreview";
 import { useForm } from "react-hook-form";
@@ -9,8 +9,6 @@ import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useState, useEffect } from "react";
 import { Artifact, MediaFile, Section as SectionType } from "../types/artifacts";
-
-type SubSectionType = keyof SectionData;
 
 const mediaFileSchema = z.object({
   fileName: z.string(),
@@ -44,15 +42,11 @@ type FormData = z.infer<typeof artifactSchema>;
 
 function Cms() {
   const [activeSection, setActiveSection] = useState(0);
-  const [activeSubSection, setActiveSubSection] = useState<{[key: number]: SubSectionType}>({ 0: 'overview' });
   const [activeMediaType, setActiveMediaType] = useState<"image" | "video">("image");
   const [profilePreview, setProfilePreview] = useState<string | null>(null);
-  const [sectionsData, setSectionsData] = useState<SectionData[]>([{
-    overview: { title: '', content: '' },
-    historicalSignificance: { title: '', content: '' },
-    conditionConservation: { title: '', content: '' },
-    references: { title: '', content: '' }
-  }]);
+  const [sections, setSections] = useState<Array<{ title: string; content: string }>>([
+    { title: 'Overview', content: '' }
+  ]);
   const [uploads, setUploads] = useState<{ fileURL: string; fileName?: string }[]>([]);
   const [mediaFiles, setMediaFiles] = useState<{
     images: (MediaFile & { preview: string })[];
@@ -83,13 +77,10 @@ function Cms() {
 
   // Update form data when sections change
   useEffect(() => {
-    const validSections = sectionsData.flatMap(section => 
-      Object.values(section).filter(subsection => 
-        subsection.title.trim() !== '' || subsection.content.trim() !== ''
-      )
-    );
-    setValue('sections', validSections);
-  }, [sectionsData, setValue]);
+    setValue('sections', sections.filter(section =>
+      section.title.trim() !== '' || section.content.trim() !== ''
+    ));
+  }, [sections, setValue]);
 
   // Update form data when media changes
   useEffect(() => {
@@ -117,25 +108,20 @@ function Cms() {
     };
     console.log("Form submitted:", formData);
   };
+const addNewSection = () => {
+  const newSections = [...sections, { title: "Untitled", content: "" }];
+  setSections(newSections);
+  setActiveSection(newSections.length - 1); // Make the new section active
+  setValue('sections', newSections);
+};
 
-  const addNewSection = () => {
-    setSectionsData([...sectionsData, {
-      overview: { title: '', content: '' },
-      historicalSignificance: { title: '', content: '' },
-      conditionConservation: { title: '', content: '' },
-      references: { title: '', content: '' }
-    }]);
-    setActiveSubSection({ ...activeSubSection, [sectionsData.length]: 'overview' });
-  };
-
-  const handleSectionChange = (sectionIndex: number, subSection: SubSectionType, title: string, content: string) => {
-    const newSectionsData = [...sectionsData];
-    newSectionsData[sectionIndex] = {
-      ...newSectionsData[sectionIndex],
-      [subSection]: { title, content }
-    };
-    setSectionsData(newSectionsData);
-  };
+const handleSectionChange = (index: number, title: string, content: string) => {
+  const newSections = [...sections];
+  newSections[index] = { title, content };
+  setSections(newSections);
+  setActiveSection(index); // Set clicked section as active
+  setValue('sections', newSections);
+};
 
   const handleFileDelete = (index: number, type: "upload" | "media") => {
     if (type === "upload") {
@@ -254,26 +240,13 @@ function Cms() {
         {errors.sections && (
           <p className="text-red-500 text-sm mb-2">{errors.sections.message}</p>
         )}
-        {sectionsData.map((sectionData, sectionIndex) => (
-          <Section
-            key={sectionIndex}
-            index={sectionIndex}
-            isActive={activeSection === sectionIndex}
-            activeSubSection={activeSubSection[sectionIndex] as SubSectionType}
-            sectionData={sectionData}
-            onTabClick={() => setActiveSection(sectionIndex)}
-            onSubSectionClick={(subSection) => {
-              setActiveSubSection({ ...activeSubSection, [sectionIndex]: subSection });
-            }}
-            onChange={(title, content) => {
-              handleSectionChange(sectionIndex, activeSubSection[sectionIndex] as SubSectionType, title, content);
-            }}
-            error={errors.sections?.[sectionIndex]?.message}
-          />
-        ))}
-        <div className="flex justify-end">
-          <Button placeholder="Add New Section" onClick={addNewSection} type="button" />
-        </div>
+        <Section
+          sections={sections}
+          activeSection={activeSection}
+          onChange={handleSectionChange}
+          onAdd={addNewSection}
+          error={errors.sections?.[activeSection]?.message}
+        />
       </div>
       <div className="flex flex-col gap-2">
         <h3 className="uppercase text-left pb-5">Pdfs</h3>
