@@ -28,12 +28,10 @@ class ArtifactController {
       res.json({ success: true, data: artifacts });
     } catch (error) {
       console.error("Error fetching artifacts:", error);
-      res
-        .status(500)
-        .json({
-          success: false,
-          error: "Error fetching artifacts",
-        });
+      res.status(500).json({
+        success: false,
+        error: "Error fetching artifacts",
+      });
     }
   };
 
@@ -46,12 +44,10 @@ class ArtifactController {
         req.params.id,
       );
       if (!artifact) {
-        res
-          .status(404)
-          .json({
-            success: false,
-            error: "Artifact not found",
-          });
+        res.status(404).json({
+          success: false,
+          error: "Artifact not found",
+        });
         return;
       }
       res.json({ success: true, data: artifact });
@@ -60,12 +56,10 @@ class ArtifactController {
         "Error fetching artifact by ID:",
         error,
       );
-      res
-        .status(500)
-        .json({
-          success: false,
-          error: "Error fetching artifact",
-        });
+      res.status(500).json({
+        success: false,
+        error: "Error fetching artifact",
+      });
     }
   };
 
@@ -102,12 +96,18 @@ class ArtifactController {
         );
 
         artifactData.mediaGallery = {
-          images: images.map((file) =>
-            this.storageService.getFileInfo(file),
-          ),
-          videos: videos.map((file) =>
-            this.storageService.getFileInfo(file),
-          ),
+          images: images.map((file) => ({
+            ...this.storageService.getFileInfo(file),
+            fileURL: this.storageService.getFileUrl(
+              file.filename,
+            ),
+          })),
+          videos: videos.map((file) => ({
+            ...this.storageService.getFileInfo(file),
+            fileURL: this.storageService.getFileUrl(
+              file.filename,
+            ),
+          })),
         };
 
         // Process other uploads
@@ -128,12 +128,10 @@ class ArtifactController {
         .json({ success: true, data: artifact });
     } catch (error) {
       console.error("Error creating artifact:", error);
-      res
-        .status(500)
-        .json({
-          success: false,
-          error: "Error creating artifact",
-        });
+      res.status(500).json({
+        success: false,
+        error: "Error creating artifact",
+      });
     }
   };
 
@@ -172,12 +170,18 @@ class ArtifactController {
 
         if (images.length || videos.length) {
           updateData.mediaGallery = {
-            images: images.map((file) =>
-              this.storageService.getFileInfo(file),
-            ),
-            videos: videos.map((file) =>
-              this.storageService.getFileInfo(file),
-            ),
+            images: images.map((file) => ({
+              ...this.storageService.getFileInfo(file),
+              fileURL: this.storageService.getFileUrl(
+                file.filename,
+              ),
+            })),
+            videos: videos.map((file) => ({
+              ...this.storageService.getFileInfo(file),
+              fileURL: this.storageService.getFileUrl(
+                file.filename,
+              ),
+            })),
           };
         }
 
@@ -201,24 +205,20 @@ class ArtifactController {
         );
 
       if (!artifact) {
-        res
-          .status(404)
-          .json({
-            success: false,
-            error: "Artifact not found",
-          });
+        res.status(404).json({
+          success: false,
+          error: "Artifact not found",
+        });
         return;
       }
 
       res.json({ success: true, data: artifact });
     } catch (error) {
       console.error("Error updating artifact:", error);
-      res
-        .status(500)
-        .json({
-          success: false,
-          error: "Error updating artifact",
-        });
+      res.status(500).json({
+        success: false,
+        error: "Error updating artifact",
+      });
     }
   };
 
@@ -231,12 +231,10 @@ class ArtifactController {
         req.params.id,
       );
       if (!artifact) {
-        res
-          .status(404)
-          .json({
-            success: false,
-            error: "Artifact not found",
-          });
+        res.status(404).json({
+          success: false,
+          error: "Artifact not found",
+        });
         return;
       }
 
@@ -271,12 +269,10 @@ class ArtifactController {
       });
     } catch (error) {
       console.error("Error deleting artifact:", error);
-      res
-        .status(500)
-        .json({
-          success: false,
-          error: "Error deleting artifact",
-        });
+      res.status(500).json({
+        success: false,
+        error: "Error deleting artifact",
+      });
     }
   };
 }

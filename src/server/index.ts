@@ -29,6 +29,12 @@ app.use(
 // Routes
 app.use("/api/artifacts", artifactRoutes);
 
+// Media files route
+app.use(
+  "/api/media",
+  express.static(path.join(process.cwd(), uploadDir)),
+);
+
 // Error handling
 app.use(errorHandler);
 

@@ -87,6 +87,6 @@ export class StorageService {
   }
 
   public getFileUrl(filename: string): string {
-    return `/${this.uploadDir}/${filename}`;
+    return `/api/media/${filename}`;
   }
 }
