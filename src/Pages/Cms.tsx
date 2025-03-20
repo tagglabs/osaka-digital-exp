@@ -52,7 +52,7 @@ const artifactSchema = z.object({
 
 type FormData = z.infer<typeof artifactSchema>;
 
-function CMS() {
+function Cms() {
   const [activeSection, setActiveSection] = useState(0);
   const [activeMediaType, setActiveMediaType] = useState<
     "image" | "video"
@@ -430,4 +430,4 @@ function CMS() {
   );
 }
 
-export default CMS;
+export default Cms;
