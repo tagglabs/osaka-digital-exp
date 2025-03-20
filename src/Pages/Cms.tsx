@@ -67,8 +67,8 @@ function Cms() {
     { fileURL: string; fileName?: string }[]
   >([]);
   const [mediaFiles, setMediaFiles] = useState<{
-    images: (MediaFile & { preview: string })[];
-    videos: (MediaFile & { preview: string })[];
+    images: { file: File; preview: string; fileName: string; fileSize: number }[];
+    videos: { file: File; preview: string; fileName: string; fileSize: number }[];
   }>({
     images: [],
     videos: [],
@@ -119,12 +119,14 @@ function Cms() {
   // Update form data when media changes
   useEffect(() => {
     setValue("mediaGallery", {
-      images: mediaFiles.images.map(
-        ({ preview, ...rest }) => rest,
-      ),
-      videos: mediaFiles.videos.map(
-        ({ preview, ...rest }) => rest,
-      ),
+      images: mediaFiles.images.map(file => ({
+        fileName: file.fileName,
+        fileSize: file.fileSize
+      })),
+      videos: mediaFiles.videos.map(file => ({
+        fileName: file.fileName,
+        fileSize: file.fileSize
+      }))
     });
   }, [mediaFiles, setValue]);
 
@@ -134,25 +136,38 @@ function Cms() {
   }, [uploads, setValue]);
 
   const onSubmit = (data: FormData) => {
-    const formData: Omit<Artifact, "_id"> = {
-      zoneName: data.zoneName,
-      nameOfArtifact: data.nameOfArtifact,
-      briefDescription: data.briefDescription,
-      profilePicture: data.profilePicture,
-      sections: data.sections,
-      uploads: data.uploads,
-      mediaGallery: data.mediaGallery,
-      url: data.url,
-    };
-    console.log("Form submitted:", formData);
-    // Send form data to server
+    const formData = new FormData();
+
+    // Append text data
+    formData.append('zoneName', data.zoneName);
+    formData.append('nameOfArtifact', data.nameOfArtifact);
+    formData.append('briefDescription', data.briefDescription);
+    formData.append('sections', JSON.stringify(data.sections));
+    formData.append('uploads', JSON.stringify(data.uploads));
+    formData.append('url', data.url || '');
+
+    // Append profile picture if exists
+    if (profileFile) {
+      formData.append('profilePicture', profileFile);
+    }
+
+    // Append media gallery data for schema validation
+    formData.append('mediaGallery', JSON.stringify(data.mediaGallery));
+
+    // Append actual media files
+    mediaFiles.images.forEach((item) => {
+      formData.append('mediaFiles', item.file);
+    });
+
+    mediaFiles.videos.forEach((item) => {
+      formData.append('mediaFiles', item.file);
+    });
+
+    console.log("Form submitted with files",formData);
 
     fetch("/api/artifacts", {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(formData),
+      body: formData, // FormData automatically sets the correct content-type
     })
       .then((response) => response.json())
       .then((data) => {
@@ -223,21 +238,24 @@ function Cms() {
     }
   };
 
+  const [profileFile, setProfileFile] = useState<File | null>(null);
+
   const handleProfilePicture = (files: File[]) => {
     if (files.length > 0) {
       if (profilePreview)
         URL.revokeObjectURL(profilePreview);
       const preview = URL.createObjectURL(files[0]);
       setProfilePreview(preview);
-      setValue("profilePicture", preview);
+      setProfileFile(files[0]);
     }
   };
 
   const handleMediaUpload = (files: File[]) => {
     const newFiles = files.map((file) => ({
+      file,
       fileName: file.name,
       fileSize: file.size,
-      preview: URL.createObjectURL(file),
+      preview: URL.createObjectURL(file)
     }));
 
     if (activeMediaType === "image") {
@@ -252,6 +270,20 @@ function Cms() {
       }));
     }
   };
+
+  // Update form data when media changes
+  useEffect(() => {
+    setValue("mediaGallery", {
+      images: mediaFiles.images.map((file) => ({
+        fileName: file.fileName,
+        fileSize: file.fileSize
+      })),
+      videos: mediaFiles.videos.map((file) => ({
+        fileName: file.fileName,
+        fileSize: file.fileSize
+      }))
+    });
+  }, [mediaFiles, setValue]);
 
   return (
     <form
@@ -394,8 +426,8 @@ function Cms() {
           ).map((file, index) => (
             <div key={index} className="flex gap-2">
               <UploadPreview
-                fileName={file.fileName}
-                fileSize={file.fileSize}
+                fileName={file.file.name}
+                fileSize={file.file.size}
                 onDelete={() =>
                   handleFileDelete(index, "media")
                 }
@@ -403,7 +435,7 @@ function Cms() {
               {activeMediaType === "image" ? (
                 <img
                   src={file.preview}
-                  alt={file.fileName}
+                  alt={file.file.name}
                   className="w-20 h-20 object-cover rounded"
                 />
               ) : (
