@@ -1,49 +1,46 @@
-export interface Section {
-  title: string;
-  content: string;
-}
+import { z } from "zod";
 
-export interface FileUpload {
-  fileURL: string;
-}
+// 📌 Universal File Schema (For all types of files)
+export const fileSchema = z.object({
+  originalName: z.string(),
+  fileName: z.string(),
+  fileSize: z.number(),
+  extension: z.string(),
+  mimeType: z.string(),
+  fileURL: z.string(), // S3 or external URL
+  uploadDate: z.string().optional(), // ISO timestamp
+});
 
-export interface MediaFile {
-  fileName: string;
-  fileSize: number;
-}
+// 📌 Section Schema (Title + Content)
+export const sectionSchema = z.object({
+  title: z.string().min(1, "Section title is required"),
+  content: z.string().min(1, "Section content is required"),
+});
 
-export interface MediaGallery {
-  images: MediaFile[];
-  videos: MediaFile[];
-}
+// 📌 Media Gallery Schema (Unified for images/videos)
+export const mediaGallerySchema = z.array(fileSchema);
 
-export interface Artifact {
-  _id?: string;
-  zoneName: string;
-  nameOfArtifact: string;
-  briefDescription: string;
-  profilePicture?: string;
-  sections: Section[];
-  uploads: FileUpload[];
-  mediaGallery: MediaGallery;
-  url?: string;
-}
+// 📌 PDF Upload Schema (Supports multiple PDFs)
+export const pdfSchema = z.array(fileSchema);
 
-// Use type instead of interface for DTO to properly handle Omit
-export type CreateArtifactDTO = Omit<Artifact, "_id">;
+// 📌 Main Artifact Schema
+export const artifactSchema = z.object({
+  zoneName: z.string().min(1, "Zone name is required"),
+  artifactName: z
+    .string()
+    .min(1, "Artifact name is required"),
+  description: z.string().min(1, "Description is required"),
+  profilePicture: fileSchema.optional(), // Single profile picture
+  sections: z
+    .array(sectionSchema)
+    .min(1, "At least one section is required"),
+  pdfs: pdfSchema, // Multiple PDFs
+  mediaGallery: mediaGallerySchema, // Multiple images/videos
+  externalURL: z.string().url().optional(), // Optional external reference link
+  createdAt: z.string().optional(), // Timestamp (ISO format)
+});
 
-// Partial makes all fields optional for updates
-export type UpdateArtifactDTO = Partial<CreateArtifactDTO>;
-
-// S3 related types
-export interface PresignedUploadURL {
-  uploadURL: string;
-  fileKey: string;
-}
-
-// API Response types
-export interface APIResponse<T> {
-  success: boolean;
-  data?: T;
-  error?: string;
-}
+// 📌 Type Definitions for TypeScript
+export type FormData = z.infer<typeof artifactSchema>;
+export type SectionType = z.infer<typeof sectionSchema>;
+export type FileType = z.infer<typeof fileSchema>;

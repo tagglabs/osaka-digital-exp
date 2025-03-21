@@ -6,9 +6,16 @@ interface DropzoneProps {
   accept?: string;
   multiple?: boolean;
   id: string; // Unique identifier for each dropzone
+  error?: string;
 }
 
-export const Dropzone = ({ onDrop, accept, multiple = false, id }: DropzoneProps) => {
+export const Dropzone = ({
+  onDrop,
+  accept,
+  multiple = false,
+  id,
+  error,
+}: DropzoneProps) => {
   const inputRef = useRef<HTMLInputElement>(null);
 
   const handleDrop = useCallback(
@@ -21,14 +28,18 @@ export const Dropzone = ({ onDrop, accept, multiple = false, id }: DropzoneProps
         onDrop?.(files.slice(0, 1));
       }
     },
-    [onDrop, multiple]
+    [onDrop, multiple],
   );
 
-  const handleDragOver = (e: React.DragEvent<HTMLLabelElement>) => {
+  const handleDragOver = (
+    e: React.DragEvent<HTMLLabelElement>,
+  ) => {
     e.preventDefault();
   };
 
-  const handleFileInput = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileInput = (
+    e: React.ChangeEvent<HTMLInputElement>,
+  ) => {
     if (e.target.files) {
       const files = Array.from(e.target.files);
       if (multiple) {
@@ -40,22 +51,27 @@ export const Dropzone = ({ onDrop, accept, multiple = false, id }: DropzoneProps
   };
 
   return (
-    <div className="flex items-center justify-center w-full">
+    <div className="flex flex-col items-center justify-center w-full">
       <label
         htmlFor={`dropzone-${id}`}
-        className="flex flex-col items-center justify-center w-full pt-2 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer"
+        className={`flex flex-col items-center justify-center w-full pt-2 border-2 border-dashed rounded-lg cursor-pointer
+          ${error ? "border-red-500" : "border-gray-300"}`}
         onDrop={handleDrop}
         onDragOver={handleDragOver}
       >
         <div className="flex flex-col items-center justify-center">
-          <img src={dropzone} alt="dropzone" className="object-contain size-[40px]" />
+          <img
+            src={dropzone}
+            alt="dropzone"
+            className="object-contain size-[40px]"
+          />
           <p className="mb-1">
             Drag & Drop to upload media
           </p>
           <p className="text-[8px] text-gray-primary uppercase">
             or
           </p>
-          <button 
+          <button
             type="button"
             className="px-4 py-2 my-1 bg-gray-300 rounded-l-full rounded-r-full text-[10px]"
             onClick={() => inputRef.current?.click()}
@@ -76,6 +92,11 @@ export const Dropzone = ({ onDrop, accept, multiple = false, id }: DropzoneProps
           onChange={handleFileInput}
         />
       </label>
+      {error && (
+        <p className="mt-1 text-sm text-red-500 self-start">
+          {error}
+        </p>
+      )}
     </div>
   );
 };

@@ -77,7 +77,7 @@ function ArtifactDetails() {
         onClose={() => setShowDownloadModal(false)}
         title="Available Downloads"
       >
-        {artifact.uploads.length > 0 ? (
+        {artifact.uploads && artifact.uploads.length > 0 ? (
           <div className="space-y-3">
             <p className="text-sm text-gray-600 mb-4">
               The following files are available for
@@ -89,6 +89,9 @@ function ArtifactDetails() {
                 href={upload.fileURL}
                 target="_blank"
                 rel="noopener noreferrer"
+                download={
+                  upload.originalName || `File ${index + 1}`
+                }
                 className="flex items-center p-3 rounded-md border border-gray-200 hover:bg-gray-50 transition-colors"
               >
                 <div className="bg-gray-200 rounded-md p-2 mr-3">
@@ -108,9 +111,15 @@ function ArtifactDetails() {
                 </div>
                 <div>
                   <p className="font-medium text-gray-800">
-                    {upload.fileURL || `File ${index + 1}`}
+                    {upload.originalName ||
+                      `File ${index + 1}`}
                   </p>
                   <p className="text-xs text-gray-500">
+                    {upload.fileSize
+                      ? `${Math.round(
+                          upload.fileSize / 1024,
+                        )} KB - `
+                      : ""}
                     Click to download
                   </p>
                 </div>
@@ -159,14 +168,9 @@ function ArtifactDetails() {
           </div>
         </div>
         {artifact.profilePicture && (
-          // <img
-          //   src={artifact.profilePicture}
-          //   alt={artifact.nameOfArtifact}
-          //   className="w-full h-[70vh] object-cover"
-          // />
           <div
             style={{
-              backgroundImage: `url(${artifact.profilePicture})`,
+              backgroundImage: `url(${artifact.profilePicture.fileURL})`,
             }}
             className="w-screen h-[70vh] bg-cover bg-center bg-no-repeat"
           />
@@ -249,7 +253,8 @@ function ArtifactDetails() {
                   : "hidden"
               } mb-6`}
             >
-              {artifact.mediaGallery.images.length > 0 && (
+              {artifact.mediaGallery?.images?.length >
+                0 && (
                 <div className="mb-6">
                   <h2 className="text-xl font-semibold mb-4">
                     Image Gallery
@@ -262,7 +267,7 @@ function ArtifactDetails() {
                           className="aspect-w-16 aspect-h-9"
                         >
                           <img
-                            src={`/api/media/${image.fileName}`}
+                            src={image.fileURL}
                             alt={`Gallery image ${
                               index + 1
                             }`}
@@ -274,7 +279,8 @@ function ArtifactDetails() {
                   </div>
                 </div>
               )}
-              {artifact.mediaGallery.videos.length > 0 && (
+              {artifact.mediaGallery?.videos?.length >
+                0 && (
                 <div className="mb-6">
                   <h2 className="text-xl font-semibold mb-4">
                     Video Gallery
@@ -287,7 +293,7 @@ function ArtifactDetails() {
                           className="aspect-w-16 aspect-h-9"
                         >
                           <video
-                            src={`/api/media/${video.fileName}`}
+                            src={video.fileURL}
                             controls
                             className="w-full rounded-lg"
                           />

@@ -1,78 +1,102 @@
 import express from "express";
 import cors from "cors";
-import * as dotenv from "dotenv";
 import mongoose from "mongoose";
-import path from "path";
-import { artifactRoutes } from "./routes/artifact.routes.js";
-import { errorHandler } from "./middleware/error.middleware.js";
-import type { Server } from "http";
-
-// Load environment variables
-dotenv.config();
+import {
+  serverConfig,
+  corsConfig,
+  mongoConfig,
+  errorMessages,
+} from "./config/index.js";
+import artifactRoutes from "./routes/artifact.routes.js";
 
 const app = express();
-const basePort = process.env.PORT
-  ? parseInt(process.env.PORT)
-  : 3000;
 
 // Middleware
-app.use(cors());
+app.use(cors(corsConfig));
 app.use(express.json());
-
-// Create uploads directory for local storage
-const uploadDir = process.env.UPLOAD_DIR || "uploads";
-app.use(
-  "/" + uploadDir,
-  express.static(path.join(process.cwd(), uploadDir)),
-);
+app.use(express.urlencoded({ extended: true }));
 
 // Routes
-app.use("/api/artifacts", artifactRoutes);
+app.use("/api", artifactRoutes);
 
-// Media files route
-app.use(
-  "/api/media",
-  express.static(path.join(process.cwd(), uploadDir)),
-);
-
-// Error handling
-app.use(errorHandler);
-
-// Define NodeJS.ErrnoException type for server errors
-interface ServerError extends NodeJS.ErrnoException {
-  code?: string;
-  port?: number;
+// Custom error type
+interface AppError extends Error {
+  status?: number;
 }
 
-// Try different ports if the default one is taken
-const startServer = async (port: number) => {
+// Error handling middleware
+app.use(
+  (
+    err: AppError,
+    req: express.Request,
+    res: express.Response,
+  ) => {
+    console.error("Error:", {
+      name: err.name,
+      message: err.message,
+      stack:
+        serverConfig.nodeEnv === "development"
+          ? err.stack
+          : undefined,
+    });
+
+    const statusCode = err.status || 500;
+    const message =
+      statusCode === 500
+        ? serverConfig.nodeEnv === "production"
+          ? errorMessages.SERVER_ERROR
+          : err.message
+        : err.message;
+
+    res.status(statusCode).json({
+      error: {
+        message,
+        ...(serverConfig.nodeEnv === "development" && {
+          stack: err.stack,
+        }),
+      },
+    });
+  },
+);
+
+// 404 handler
+app.use((req: express.Request, res: express.Response) => {
+  res.status(404).json({ error: errorMessages.NOT_FOUND });
+});
+
+// Connect to MongoDB
+const startServer = async () => {
   try {
-    await mongoose.connect(
-      process.env.MONGODB_URI ||
-        "mongodb://127.0.0.1:27017/artifacts-db",
-    );
+    await mongoose.connect(mongoConfig.uri);
     console.log("Connected to MongoDB");
 
-    const server: Server = app.listen(port, () => {
-      console.log(`Server is running on port ${port}`);
-    });
-
-    server.on("error", (err: ServerError) => {
-      if (err.code === "EADDRINUSE") {
-        console.log(
-          `Port ${port} is busy, trying ${port + 1}...`,
-        );
-        startServer(port + 1);
-      } else {
-        console.error("Server error:", err);
-        process.exit(1);
-      }
+    app.listen(serverConfig.port, () => {
+      console.log(
+        `Server running in ${serverConfig.nodeEnv} mode on port ${serverConfig.port}`,
+      );
+      console.log(`Base URL: ${serverConfig.baseUrl}`);
     });
   } catch (error) {
-    console.error("MongoDB connection error:", error);
+    console.error("Failed to start server:", error);
     process.exit(1);
   }
 };
 
+// Handle uncaught errors
+process.on("uncaughtException", (error: Error) => {
+  console.error("Uncaught Exception:", error);
+  process.exit(1);
+});
+
+process.on("unhandledRejection", (reason: unknown) => {
+  console.error("Unhandled Rejection:", reason);
+  process.exit(1);
+});
+
 // Start server
-startServer(basePort);
+startServer().catch((error) => {
+  console.error("Server startup failed:", error);
+  process.exit(1);
+});
+
+export default app;

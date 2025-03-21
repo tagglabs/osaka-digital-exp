@@ -1,41 +1,68 @@
 import { Router } from "express";
-import { artifactController } from "../controllers/artifact.controller.js";
-import { validateArtifact } from "../middleware/validation.middleware.js";
+import multer from "multer";
+import type { RequestHandler } from "express";
+import { artifactController } from "../controllers/artifactController.js";
+import { uploadConfig } from "../config/index.js";
 
 const router = Router();
-const upload = artifactController.getUploader();
 
-// Configure multer for different file types
-const uploadFields = [
-  { name: "profilePicture", maxCount: 1 },
-  { name: "images", maxCount: 10 },
-  { name: "videos", maxCount: 5 },
-  { name: "uploads", maxCount: 10 },
-];
+// Configure multer for memory storage
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: {
+    fileSize: uploadConfig.maxFileSize,
+  },
+});
 
-// Get all artifacts
-router.get("/", artifactController.getAllArtifacts);
+// Helper to wrap async handlers
+const asyncHandler = (
+  fn: RequestHandler,
+): RequestHandler => {
+  return async (req, res, next) => {
+    try {
+      await fn(req, res, next);
+    } catch (error) {
+      next(error);
+    }
+  };
+};
 
-// Get single artifact by ID
-router.get("/:id", artifactController.getArtifactById);
-
-// Create new artifact with file uploads
+// File upload route
 router.post(
-  "/",
-  upload.fields(uploadFields),
-  validateArtifact,
-  artifactController.createArtifact,
+  "/upload",
+  upload.single("file"),
+  asyncHandler(
+    artifactController.uploadFile as RequestHandler,
+  ),
 );
 
-// Update artifact with optional file uploads
-router.put(
-  "/:id",
-  upload.fields(uploadFields),
-  validateArtifact,
-  artifactController.updateArtifact,
+// Artifact routes
+router.post(
+  "/artifacts",
+  asyncHandler(
+    artifactController.createArtifact as RequestHandler,
+  ),
 );
 
-// Delete artifact and its associated files
-router.delete("/:id", artifactController.deleteArtifact);
+router.get(
+  "/artifacts",
+  asyncHandler(
+    artifactController.getAllArtifacts as RequestHandler,
+  ),
+);
 
-export { router as artifactRoutes };
+router.get(
+  "/artifacts/:id",
+  asyncHandler(
+    artifactController.getArtifact as RequestHandler,
+  ),
+);
+
+router.delete(
+  "/artifacts/:id",
+  asyncHandler(
+    artifactController.deleteArtifact as RequestHandler,
+  ),
+);
+
+export default router;
