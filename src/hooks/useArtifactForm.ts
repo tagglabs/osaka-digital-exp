@@ -246,7 +246,7 @@ export const useArtifactForm = () => {
       );
 
       // Submit to artifacts API
-      // await axios.post("/api/artifacts", submissionData);
+      await axios.post("/api/artifacts", submissionData);
 
       console.log("API submission successful");
 
