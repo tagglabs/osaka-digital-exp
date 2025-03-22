@@ -1,20 +1,47 @@
 import mongoose from "mongoose";
 
+// Define interfaces for file metadata
+interface FileMetadata {
+  originalName: string;
+  fileName: string;
+  fileSize: number;
+  extension: string;
+  mimeType: string;
+  fileURL: string;
+  preview?: string;
+  uploadDate: Date;
+}
+
 // Define interface for type safety
 export interface IArtifact {
   zoneName: string;
   artifactName: string;
   description?: string;
-  profilePicture: string;
   sections: Array<{
     title: string;
     content: string;
   }>;
-  pdfs: string[];
-  mediaGallery: string[];
+  pdfs?: FileMetadata[];
+  mediaGallery?: FileMetadata[];
   externalURL?: string;
   createdAt: Date;
 }
+
+// Create schema for file metadata
+const fileMetadataSchema =
+  new mongoose.Schema<FileMetadata>(
+    {
+      originalName: { type: String, required: true },
+      fileName: { type: String, required: true },
+      fileSize: { type: Number, required: true },
+      extension: { type: String, required: true },
+      mimeType: { type: String, required: true },
+      fileURL: { type: String, required: true },
+      preview: { type: String },
+      uploadDate: { type: Date, required: true },
+    },
+    { _id: false },
+  );
 
 // Create schema with proper typings
 const artifactSchema = new mongoose.Schema<IArtifact>(
@@ -39,10 +66,6 @@ const artifactSchema = new mongoose.Schema<IArtifact>(
       type: String,
       required: false,
     },
-    profilePicture: {
-      type: String,
-      required: [true, "Profile picture URL is required"],
-    },
     sections: [
       {
         title: {
@@ -57,24 +80,12 @@ const artifactSchema = new mongoose.Schema<IArtifact>(
       },
     ],
     pdfs: {
-      type: [String],
-      required: true,
-      validate: {
-        validator: function (v: string[]) {
-          return Array.isArray(v) && v.length > 0;
-        },
-        message: "At least one PDF is required",
-      },
+      type: [fileMetadataSchema],
+      required: false,
     },
     mediaGallery: {
-      type: [String],
-      required: true,
-      validate: {
-        validator: function (v: string[]) {
-          return Array.isArray(v) && v.length > 0;
-        },
-        message: "At least one media file is required",
-      },
+      type: [fileMetadataSchema],
+      required: false,
     },
     externalURL: {
       type: String,

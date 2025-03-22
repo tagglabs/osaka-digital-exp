@@ -56,13 +56,13 @@ export class S3Service {
 
   static async uploadFile(
     file: Express.Multer.File,
-    type: "image" | "video" | "pdf",
+    type: "image" | "video" | "pdf" | "profile",
   ): Promise<{ fileURL: string }> {
     try {
       // Validate file type
       const mimeType = file.mimetype;
       const validTypes =
-        type === "image"
+        type === "image" || type === "profile"
           ? uploadConfig.allowedImageTypes
           : type === "video"
           ? uploadConfig.allowedVideoTypes
@@ -90,7 +90,9 @@ export class S3Service {
         file.originalname,
       );
       const folderPath =
-        type === "image"
+        type === "profile"
+          ? "profile-images/"
+          : type === "image"
           ? "images/"
           : type === "video"
           ? "videos/"

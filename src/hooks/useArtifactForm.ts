@@ -6,10 +6,8 @@ import {
   artifactSchema,
   FormData,
   SectionType,
-  FileType,
 } from "../types/artifacts";
 import { useUploadManager } from "./useUploadManager";
-import { FileWithPreview } from "../types/uploadManager";
 
 export const useArtifactForm = () => {
   // Form state
@@ -19,7 +17,9 @@ export const useArtifactForm = () => {
     { title: "Overview", content: "" },
   ]);
 
-  // Initialize form with react-hook-form
+  // Initialize upload manager and form
+  const uploadManager = useUploadManager();
+  const uploadedFiles = uploadManager.getSelectedFiles();
   const {
     register,
     handleSubmit,
@@ -28,7 +28,6 @@ export const useArtifactForm = () => {
     setError,
     clearErrors,
     setValue,
-    watch,
   } = useForm<FormData>({
     resolver: zodResolver(artifactSchema),
     defaultValues: {
@@ -41,18 +40,10 @@ export const useArtifactForm = () => {
     },
   });
 
-  // Debug: Watch form values
-  const formValues = watch();
-  console.log("Current form values:", formValues);
-  console.log("Current form errors:", errors);
-
   // Keep form sections in sync with local state
   useEffect(() => {
     setValue("sections", sections);
   }, [sections, setValue]);
-
-  // Initialize upload manager
-  const uploadManager = useUploadManager();
 
   // File handlers
   const handleProfilePicture = (files: File[]) => {
@@ -77,19 +68,19 @@ export const useArtifactForm = () => {
   ) => {
     const files =
       type === "image"
-        ? uploadManager.getFiles().mediaFiles.images
-        : uploadManager.getFiles().mediaFiles.videos;
+        ? uploadedFiles.media.images
+        : uploadedFiles.media.videos;
     const fileToDelete = files[index];
     if (fileToDelete) {
-      uploadManager.removeFile(type, fileToDelete.fileName);
+      uploadManager.removeFile(type, fileToDelete.name);
     }
   };
 
   const handlePdfDelete = (index: number) => {
-    const pdfs = uploadManager.getFiles().pdfs;
+    const pdfs = uploadedFiles.pdfs;
     const pdfToDelete = pdfs[index];
     if (pdfToDelete) {
-      uploadManager.removeFile("pdf", pdfToDelete.fileName);
+      uploadManager.removeFile("pdf", pdfToDelete.name);
     }
   };
 
@@ -124,24 +115,8 @@ export const useArtifactForm = () => {
     }
   };
 
-  // Convert FileWithPreview to FileType
-  const convertToFileType = (
-    file: FileWithPreview,
-  ): FileType => ({
-    originalName: file.originalName,
-    fileName: file.fileName,
-    fileSize: file.fileSize,
-    extension: file.extension,
-    mimeType: file.mimeType,
-    fileURL: file.fileURL,
-    uploadDate: new Date().toISOString(),
-  });
-
   // Form submission handler
   const onSubmit = async (data: FormData) => {
-    console.log("Form submission started");
-    console.log("Received form data:", data);
-
     setIsSubmitting(true);
     clearErrors();
 
@@ -211,35 +186,9 @@ export const useArtifactForm = () => {
 
       console.log("Zod validation passed");
 
-      const uploadStatus = uploadManager.getStatus();
-      console.log("Upload status:", uploadStatus);
-
-      // Check if any files are still uploading
-      if (uploadStatus.isUploading) {
-        setError("root", {
-          message:
-            "Please wait for all file uploads to complete",
-        });
-        setIsSubmitting(false);
-        return;
-      }
-
-      // Check for upload errors
-      if (uploadStatus.hasErrors) {
-        setError("root", {
-          message:
-            "Please fix upload errors before submitting",
-        });
-        setIsSubmitting(false);
-        return;
-      }
-
-      // Upload any remaining files
-      await uploadManager.uploadAll();
-
-      // Get all uploaded files
-      const uploadedFiles = uploadManager.getFiles();
-      console.log("Uploaded files:", uploadedFiles);
+      // Upload all files and get their details
+      const uploadResult = await uploadManager.uploadAll();
+      console.log("Upload result:", uploadResult);
 
       // Prepare submission data
       const submissionData: FormData = {
@@ -250,21 +199,31 @@ export const useArtifactForm = () => {
           title: section.title.trim(),
           content: section.content.trim(),
         })),
-        pdfs: uploadedFiles.pdfs.map(convertToFileType),
+        pdfs: uploadResult.pdfs.map((file) => ({
+          ...file,
+          uploadDate: new Date().toISOString(),
+        })),
         mediaGallery: [
-          ...uploadedFiles.mediaFiles.images.map(
-            convertToFileType,
+          ...uploadResult.mediaGallery.images.map(
+            (file) => ({
+              ...file,
+              uploadDate: new Date().toISOString(),
+            }),
           ),
-          ...uploadedFiles.mediaFiles.videos.map(
-            convertToFileType,
+          ...uploadResult.mediaGallery.videos.map(
+            (file) => ({
+              ...file,
+              uploadDate: new Date().toISOString(),
+            }),
           ),
         ],
-        profilePicture: uploadedFiles.profilePicture
-          ? convertToFileType(uploadedFiles.profilePicture)
+        profilePicture: uploadResult.profilePicture
+          ? {
+              ...uploadResult.profilePicture,
+              uploadDate: new Date().toISOString(),
+            }
           : undefined,
       };
-
-      console.log("Final submission data:", submissionData);
 
       // Validate submission data
       const finalValidation =
@@ -309,9 +268,6 @@ export const useArtifactForm = () => {
     }
   };
 
-  const files = uploadManager.getFiles();
-  const uploadStatus = uploadManager.getStatus();
-
   return {
     // Form state
     register,
@@ -326,11 +282,12 @@ export const useArtifactForm = () => {
     handleSectionChange,
 
     // File management
-    profilePreview: files.profilePicture?.preview || null,
-    profileFile: files.profilePicture,
-    pdfs: files.pdfs,
-    mediaFiles: files.mediaFiles,
-    uploadStatus,
+    profilePreview: uploadedFiles.profilePicture
+      ? URL.createObjectURL(uploadedFiles.profilePicture)
+      : null,
+    profileFile: uploadedFiles.profilePicture,
+    pdfs: uploadedFiles.pdfs,
+    mediaFiles: uploadedFiles.media,
 
     // File handlers
     handleProfilePicture,

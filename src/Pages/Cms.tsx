@@ -16,10 +16,8 @@ function Cms() {
     addNewSection,
     handleSectionChange,
     profilePreview,
-    profileFile,
     pdfs,
     mediaFiles,
-    uploadStatus,
     handleProfilePicture,
     handlePdfUpload,
     handlePdfDelete,
@@ -38,8 +36,6 @@ function Cms() {
         errors={errors}
         onProfileUpload={handleProfilePicture}
         profilePreview={profilePreview}
-        profileProgress={profileFile?.progress}
-        profileError={profileFile?.error}
       />
 
       {/* Sections */}
@@ -97,9 +93,7 @@ function Cms() {
             isSubmitting ? "Saving..." : "Save Changes"
           }
           type="submit"
-          disabled={
-            isSubmitting || uploadStatus.isUploading
-          }
+          disabled={isSubmitting}
         />
       </div>
     </form>

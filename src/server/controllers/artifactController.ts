@@ -2,7 +2,6 @@ import { Request, Response } from "express";
 import { Artifact } from "../models/Artifact.js";
 import { S3Service } from "../services/s3Service.js";
 import { z } from "zod";
-import mongoose from "mongoose";
 import { errorMessages } from "../config/index.js";
 
 // Validation schemas
@@ -13,6 +12,8 @@ const fileSchema = z.object({
   extension: z.string(),
   mimeType: z.string(),
   fileURL: z.string(),
+  preview: z.string().optional(),
+  uploadDate: z.string().datetime(),
 });
 
 const sectionSchema = z.object({
@@ -28,16 +29,11 @@ const artifactSchema = z.object({
     .string()
     .min(3, "Artifact name must be at least 3 characters"),
   description: z.string().optional(),
-  profilePicture: fileSchema,
   sections: z
     .array(sectionSchema)
     .min(1, "At least one section is required"),
-  pdfs: z
-    .array(z.string())
-    .min(1, "At least one PDF is required"),
-  mediaGallery: z
-    .array(z.string())
-    .min(1, "At least one media file is required"),
+  pdfs: z.array(fileSchema).optional(),
+  mediaGallery: z.array(fileSchema).optional(),
   externalURL: z.string().url().optional(),
 });
 
@@ -86,29 +82,18 @@ export const artifactController = {
 
   // Create new artifact
   async createArtifact(req: Request, res: Response) {
-    const session = await mongoose.startSession();
-    session.startTransaction();
-
     try {
       // Validate request body
       const validatedData = artifactSchema.parse(req.body);
 
       // Create new artifact
-      const artifact = await Artifact.create(
-        [
-          {
-            ...validatedData,
-            createdAt: new Date(),
-          },
-        ],
-        { session },
-      );
+      const artifact = await Artifact.create({
+        ...validatedData,
+        createdAt: new Date(),
+      });
 
-      await session.commitTransaction();
-      res.status(201).json(artifact[0]);
+      res.status(201).json(artifact);
     } catch (error) {
-      await session.abortTransaction();
-
       if (error instanceof z.ZodError) {
         throw new ApiError(
           400,
@@ -123,8 +108,6 @@ export const artifactController = {
           ? error.message
           : errorMessages.DATABASE_ERROR,
       );
-    } finally {
-      session.endSession();
     }
   },
 
@@ -172,9 +155,6 @@ export const artifactController = {
 
   // Delete artifact
   async deleteArtifact(req: Request, res: Response) {
-    const session = await mongoose.startSession();
-    session.startTransaction();
-
     try {
       const artifact = await Artifact.findById(
         req.params.id,
@@ -185,26 +165,26 @@ export const artifactController = {
 
       // Delete files from S3
       const filesToDelete = [
-        artifact.profilePicture,
-        ...artifact.pdfs,
-        ...artifact.mediaGallery,
+        ...(artifact.pdfs?.map((file) => file.fileURL) ||
+          []),
+        ...(artifact.mediaGallery?.map(
+          (file) => file.fileURL,
+        ) || []),
       ];
 
-      await Promise.all(
-        filesToDelete.map((fileUrl) =>
-          S3Service.deleteFile(fileUrl),
-        ),
-      );
+      if (filesToDelete.length > 0) {
+        await Promise.all(
+          filesToDelete.map((fileUrl) =>
+            S3Service.deleteFile(fileUrl),
+          ),
+        );
+      }
 
       // Delete artifact from database
-      await Artifact.findByIdAndDelete(req.params.id, {
-        session,
-      });
+      await Artifact.findByIdAndDelete(req.params.id);
 
-      await session.commitTransaction();
       res.status(204).send();
     } catch (error) {
-      await session.abortTransaction();
       if (error instanceof ApiError) {
         throw error;
       }
@@ -215,8 +195,6 @@ export const artifactController = {
           ? error.message
           : errorMessages.DATABASE_ERROR,
       );
-    } finally {
-      session.endSession();
     }
   },
 };

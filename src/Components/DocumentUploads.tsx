@@ -1,17 +1,8 @@
 import React from "react";
 import { Dropzone } from "../Components/Dropzone";
 import { UploadPreview } from "../Components/UploadPreview";
-import { FileType } from "../types/artifacts";
-
-interface FileWithPreview extends FileType {
-  file: File;
-  preview: string;
-  progress: number;
-  error?: string;
-}
-
 interface DocumentUploadsProps {
-  pdfs: FileWithPreview[];
+  pdfs: File[];
   onFileUpload: (files: File[]) => void;
   onDelete: (index: number) => void;
   error?: string;
@@ -34,30 +25,10 @@ const DocumentUploads: React.FC<DocumentUploadsProps> = ({
         {pdfs.map((pdf, index) => (
           <div key={index} className="relative">
             <UploadPreview
-              fileURL={pdf.preview}
-              fileName={pdf.originalName}
+              fileURL={URL.createObjectURL(pdf)}
+              fileName={pdf.name}
               onDelete={() => onDelete(index)}
             />
-            {/* Progress bar */}
-            {pdf.progress > 0 && pdf.progress < 100 && (
-              <div className="mt-1">
-                <div className="w-full bg-gray-200 rounded h-1">
-                  <div
-                    className="bg-blue-600 h-1 rounded"
-                    style={{ width: `${pdf.progress}%` }}
-                  />
-                </div>
-                <p className="text-xs text-gray-600">
-                  Uploading... {Math.round(pdf.progress)}%
-                </p>
-              </div>
-            )}
-            {/* Error message */}
-            {pdf.error && (
-              <p className="text-sm text-red-500 mt-1">
-                {pdf.error}
-              </p>
-            )}
           </div>
         ))}
       </div>

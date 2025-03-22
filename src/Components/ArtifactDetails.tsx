@@ -12,8 +12,6 @@ interface ArtifactDetailsProps {
   errors: FieldErrors<FormData>;
   onProfileUpload: (files: File[]) => void;
   profilePreview: string | null;
-  profileProgress?: number;
-  profileError?: string;
 }
 
 const ArtifactDetails: React.FC<ArtifactDetailsProps> = ({
@@ -21,8 +19,6 @@ const ArtifactDetails: React.FC<ArtifactDetailsProps> = ({
   errors,
   onProfileUpload,
   profilePreview,
-  profileProgress = 0,
-  profileError,
 }) => {
   return (
     <div>
@@ -60,25 +56,7 @@ const ArtifactDetails: React.FC<ArtifactDetailsProps> = ({
                 id="profile"
                 onDrop={onProfileUpload}
                 accept="image/*"
-                error={profileError}
               />
-              {profileProgress > 0 &&
-                profileProgress < 100 && (
-                  <div className="mt-2">
-                    <div className="w-full bg-gray-200 rounded h-2">
-                      <div
-                        className="bg-blue-600 h-2 rounded"
-                        style={{
-                          width: `${profileProgress}%`,
-                        }}
-                      />
-                    </div>
-                    <p className="text-sm text-gray-600 mt-1">
-                      Uploading...{" "}
-                      {Math.round(profileProgress)}%
-                    </p>
-                  </div>
-                )}
             </div>
             {profilePreview && (
               <div className="w-1/2 h-[150px]">

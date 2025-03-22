@@ -1,94 +1,56 @@
-import { FileType } from "./artifacts";
-
-// Extends the base FileType to match component expectations
-export interface FileWithPreview extends FileType {
-  file: File;
+// Core file details interface
+export interface FileDetails {
+  originalName: string;
+  fileName: string;
+  fileSize: number;
+  extension: string;
+  mimeType: string;
+  fileURL: string;
   preview: string;
-  progress: number;
-  error?: string;
-  isUploading: boolean;
-  uploaded: boolean;
 }
 
-export interface MediaState {
-  images: FileWithPreview[];
-  videos: FileWithPreview[];
+// Media files structure
+export interface MediaGallery {
+  images: FileDetails[];
+  videos: FileDetails[];
 }
 
-// Upload Manager State
-export interface UploadManagerState {
-  profilePicture: FileWithPreview | null;
-  pdfs: FileWithPreview[];
-  media: MediaState;
+// Storage state for selected files before upload
+export interface FileStorageState {
+  profilePicture: File | null;
+  pdfs: File[];
+  media: {
+    images: File[];
+    videos: File[];
+  };
 }
 
-// Upload Status for tracking overall form state
-export interface UploadStatus {
-  isUploading: boolean;
-  hasErrors: boolean;
-  totalFiles: number;
-  uploadedFiles: number;
+// Upload result structure
+export interface UploadResult {
+  profilePicture?: FileDetails;
+  pdfs: FileDetails[];
+  mediaGallery: MediaGallery;
 }
 
-// Upload Manager Actions
-export type UploadAction =
-  | {
-      type: "ADD_FILE";
-      payload: {
-        fileType: "profile" | "pdf" | "image" | "video";
-        file: File;
-      };
-    }
-  | {
-      type: "UPDATE_PROGRESS";
-      payload: { fileId: string; progress: number };
-    }
-  | {
-      type: "SET_ERROR";
-      payload: { fileId: string; error: string };
-    }
-  | {
-      type: "SET_UPLOADED";
-      payload: { fileId: string; fileURL: string };
-    }
-  | {
-      type: "REMOVE_FILE";
-      payload: {
-        fileType: "profile" | "pdf" | "image" | "video";
-        fileId: string;
-      };
-    }
-  | { type: "RESET_ALL" };
+// File type constant
+export type FileType =
+  | "profile"
+  | "pdf"
+  | "image"
+  | "video";
 
 // Upload Manager Interface
 export interface UploadManager {
-  // File management
-  addFile: (
-    type: "profile" | "pdf" | "image" | "video",
-    files: File[],
-  ) => void;
-  removeFile: (
-    type: "profile" | "pdf" | "image" | "video",
-    fileId: string,
-  ) => void;
+  // File management before upload
+  addFile: (type: FileType, files: File[]) => void;
+  removeFile: (type: FileType, fileName: string) => void;
 
-  // Status and data
-  getStatus: () => UploadStatus;
-  getFiles: () => {
-    profilePicture: FileWithPreview | null;
-    pdfs: FileWithPreview[];
-    mediaFiles: MediaState;
-  };
+  // Get current selected files
+  getSelectedFiles: () => FileStorageState;
 
-  // Operations
-  uploadAll: () => Promise<void>;
+  // Main upload operation
+  uploadAll: () => Promise<UploadResult>;
+
+  // Reset state
   reset: () => void;
-}
-
-// Utility type for component props
-export interface FileComponentProps {
-  profilePicture: FileWithPreview | null;
-  pdfs: FileWithPreview[];
-  mediaFiles: MediaState;
-  uploadStatus: UploadStatus;
 }

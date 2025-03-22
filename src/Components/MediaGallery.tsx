@@ -2,18 +2,9 @@ import React, { useState } from "react";
 import { SelectFileType } from "../Components/SelectFileType";
 import { Dropzone } from "../Components/Dropzone";
 import { UploadPreview } from "../Components/UploadPreview";
-import { FileType } from "../types/artifacts";
-
-interface FileWithPreview extends FileType {
-  file: File;
-  preview: string;
-  progress: number;
-  error?: string;
-}
-
 interface MediaState {
-  images: FileWithPreview[];
-  videos: FileWithPreview[];
+  images: File[];
+  videos: File[];
 }
 
 interface MediaGalleryProps {
@@ -94,54 +85,28 @@ const MediaGallery: React.FC<MediaGalleryProps> = ({
               <div className="w-20 h-20 rounded overflow-hidden">
                 {activeMediaType === "image" ? (
                   <img
-                    src={file.preview}
-                    alt={file.originalName}
+                    src={URL.createObjectURL(file)}
+                    alt={file.name}
                     className="w-full h-full object-cover"
                   />
                 ) : (
                   <video
-                    src={file.preview}
+                    src={URL.createObjectURL(file)}
                     className="w-full h-full object-cover"
                     controls
                   />
                 )}
               </div>
 
-              {/* File Info and Progress */}
+              {/* File Info */}
               <div className="flex-1">
                 <UploadPreview
-                  fileName={file.originalName}
-                  fileSize={file.fileSize}
+                  fileName={file.name}
+                  fileSize={file.size}
                   onDelete={() =>
                     onDelete(index, activeMediaType)
                   }
                 />
-
-                {/* Progress bar */}
-                {file.progress > 0 &&
-                  file.progress < 100 && (
-                    <div className="mt-2">
-                      <div className="w-full bg-gray-200 rounded h-1">
-                        <div
-                          className="bg-blue-600 h-1 rounded"
-                          style={{
-                            width: `${file.progress}%`,
-                          }}
-                        />
-                      </div>
-                      <p className="text-xs text-gray-600">
-                        Uploading...{" "}
-                        {Math.round(file.progress)}%
-                      </p>
-                    </div>
-                  )}
-
-                {/* Error message */}
-                {file.error && (
-                  <p className="text-sm text-red-500 mt-1">
-                    {file.error}
-                  </p>
-                )}
               </div>
             </div>
           </div>
