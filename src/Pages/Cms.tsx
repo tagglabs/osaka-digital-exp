@@ -17,11 +17,12 @@ function Cms() {
     handleSectionChange,
     profilePreview,
     profileFile,
-    handleProfilePicture,
     pdfs,
+    mediaFiles,
+    uploadStatus,
+    handleProfilePicture,
     handlePdfUpload,
     handlePdfDelete,
-    mediaFiles,
     handleMediaUpload,
     handleMediaDelete,
   } = useArtifactForm();
@@ -96,7 +97,9 @@ function Cms() {
             isSubmitting ? "Saving..." : "Save Changes"
           }
           type="submit"
-          disabled={isSubmitting}
+          disabled={
+            isSubmitting || uploadStatus.isUploading
+          }
         />
       </div>
     </form>

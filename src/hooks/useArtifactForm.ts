@@ -4,531 +4,70 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import axios from "axios";
 import {
   artifactSchema,
-  FileType,
+  FormData,
   SectionType,
+  FileType,
 } from "../types/artifacts";
-
-import type { FormData } from "../types/artifacts";
-
-interface FileWithPreview extends FileType {
-  file: File;
-  preview: string;
-  progress: number;
-  error?: string;
-  uploaded?: boolean;
-}
-
-interface MediaState {
-  images: FileWithPreview[];
-  videos: FileWithPreview[];
-}
+import { useUploadManager } from "./useUploadManager";
+import { FileWithPreview } from "../types/uploadManager";
 
 export const useArtifactForm = () => {
+  // Form state
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [activeSection, setActiveSection] = useState(0);
-  const [profilePreview, setProfilePreview] = useState<
-    string | null
-  >(null);
-  const [profileFile, setProfileFile] =
-    useState<FileWithPreview | null>(null);
   const [sections, setSections] = useState<SectionType[]>([
     { title: "Overview", content: "" },
   ]);
-  const [pdfs, setPdfs] = useState<FileWithPreview[]>([]);
-  const [mediaFiles, setMediaFiles] = useState<MediaState>({
-    images: [],
-    videos: [],
-  });
 
+  // Initialize form with react-hook-form
   const {
     register,
     handleSubmit,
     formState: { errors },
-    setValue,
     reset,
     setError,
     clearErrors,
+    setValue,
+    watch,
   } = useForm<FormData>({
     resolver: zodResolver(artifactSchema),
     defaultValues: {
+      zoneName: "",
+      artifactName: "",
+      description: "",
       sections: [{ title: "Overview", content: "" }],
       pdfs: [],
       mediaGallery: [],
     },
   });
 
-  // Cleanup previews on unmount
+  // Debug: Watch form values
+  const formValues = watch();
+  console.log("Current form values:", formValues);
+  console.log("Current form errors:", errors);
+
+  // Keep form sections in sync with local state
   useEffect(() => {
-    return () => {
-      if (profilePreview) {
-        URL.revokeObjectURL(profilePreview);
-      }
-      mediaFiles.images.forEach((item) => {
-        URL.revokeObjectURL(item.preview);
-      });
-      mediaFiles.videos.forEach((item) => {
-        URL.revokeObjectURL(item.preview);
-      });
-      pdfs.forEach((item) => {
-        URL.revokeObjectURL(item.preview);
-      });
-    };
-  }, [mediaFiles, pdfs, profilePreview]);
-
-  // Upload file to server and get S3 URL
-  const uploadFile = async (
-    file: File,
-    type: string,
-    fileId: string,
-  ): Promise<string> => {
-    const formData = new FormData();
-    formData.append("file", file);
-    formData.append("type", type);
-
-    try {
-      const response = await axios.post(
-        "/api/upload",
-        formData,
-        {
-          headers: {
-            "Content-Type": "multipart/form-data",
-          },
-          onUploadProgress: (progressEvent) => {
-            const progress =
-              (progressEvent.loaded /
-                (progressEvent.total || 0)) *
-              100;
-
-            // Update progress based on file type
-            if (
-              type === "profile" &&
-              profileFile?.file === file
-            ) {
-              setProfileFile((prev) =>
-                prev
-                  ? { ...prev, progress, error: undefined }
-                  : null,
-              );
-            } else if (type === "pdf") {
-              setPdfs((prev) =>
-                prev.map((item) =>
-                  item.file === file
-                    ? {
-                        ...item,
-                        progress,
-                        error: undefined,
-                      }
-                    : item,
-                ),
-              );
-            } else if (type === "image") {
-              setMediaFiles((prev) => ({
-                ...prev,
-                images: prev.images.map((item) =>
-                  item.file === file
-                    ? {
-                        ...item,
-                        progress,
-                        error: undefined,
-                      }
-                    : item,
-                ),
-              }));
-            } else if (type === "video") {
-              setMediaFiles((prev) => ({
-                ...prev,
-                videos: prev.videos.map((item) =>
-                  item.file === file
-                    ? {
-                        ...item,
-                        progress,
-                        error: undefined,
-                      }
-                    : item,
-                ),
-              }));
-            }
-          },
-        },
-      );
-
-      // Mark file as uploaded with its URL
-      if (
-        type === "profile" &&
-        profileFile?.file === file
-      ) {
-        setProfileFile((prev) =>
-          prev
-            ? {
-                ...prev,
-                fileURL: response.data.fileURL,
-                uploaded: true,
-              }
-            : null,
-        );
-      } else if (type === "pdf") {
-        setPdfs((prev) =>
-          prev.map((item) =>
-            item.file === file
-              ? {
-                  ...item,
-                  fileURL: response.data.fileURL,
-                  uploaded: true,
-                }
-              : item,
-          ),
-        );
-      } else if (type === "image") {
-        setMediaFiles((prev) => ({
-          ...prev,
-          images: prev.images.map((item) =>
-            item.file === file
-              ? {
-                  ...item,
-                  fileURL: response.data.fileURL,
-                  uploaded: true,
-                }
-              : item,
-          ),
-        }));
-      } else if (type === "video") {
-        setMediaFiles((prev) => ({
-          ...prev,
-          videos: prev.videos.map((item) =>
-            item.file === file
-              ? {
-                  ...item,
-                  fileURL: response.data.fileURL,
-                  uploaded: true,
-                }
-              : item,
-          ),
-        }));
-      }
-
-      return response.data.fileURL;
-    } catch (error) {
-      const errorMessage = axios.isAxiosError(error)
-        ? error.response?.data?.message || error.message
-        : "Upload failed";
-
-      if (
-        type === "profile" &&
-        profileFile?.file === file
-      ) {
-        setProfileFile((prev) =>
-          prev
-            ? { ...prev, progress: 0, error: errorMessage }
-            : null,
-        );
-      } else if (type === "pdf") {
-        setPdfs((prev) =>
-          prev.map((item) =>
-            item.file === file
-              ? {
-                  ...item,
-                  progress: 0,
-                  error: errorMessage,
-                }
-              : item,
-          ),
-        );
-      } else if (type === "image") {
-        setMediaFiles((prev) => ({
-          ...prev,
-          images: prev.images.map((item) =>
-            item.file === file
-              ? {
-                  ...item,
-                  progress: 0,
-                  error: errorMessage,
-                }
-              : item,
-          ),
-        }));
-      } else if (type === "video") {
-        setMediaFiles((prev) => ({
-          ...prev,
-          videos: prev.videos.map((item) =>
-            item.file === file
-              ? {
-                  ...item,
-                  progress: 0,
-                  error: errorMessage,
-                }
-              : item,
-          ),
-        }));
-      }
-
-      throw new Error(errorMessage);
-    }
-  };
-
-  // Prepare data by collecting uploaded files and their URLs
-  const prepareSubmissionData = (): FormData => {
-    // Set sections data
     setValue("sections", sections);
+  }, [sections, setValue]);
 
-    // Set profile picture data if uploaded
-    if (profileFile?.uploaded && profileFile?.fileURL) {
-      setValue("profilePicture", {
-        originalName: profileFile.file.name,
-        fileName: profileFile.file.name,
-        fileSize: profileFile.file.size,
-        extension:
-          profileFile.file.name.split(".").pop() || "",
-        mimeType: profileFile.file.type,
-        fileURL: profileFile.fileURL,
-      });
-    }
-
-    // Set PDF file data
-    const uploadedPdfs = pdfs
-      .filter((pdf) => pdf.uploaded && pdf.fileURL)
-      .map((pdf) => ({
-        originalName: pdf.file.name,
-        fileName: pdf.file.name,
-        fileSize: pdf.file.size,
-        extension: pdf.file.name.split(".").pop() || "",
-        mimeType: pdf.file.type,
-        fileURL: pdf.fileURL,
-      }));
-    setValue("pdfs", uploadedPdfs);
-
-    // Set media gallery data
-    const uploadedMedia = [
-      ...mediaFiles.images
-        .filter((img) => img.uploaded && img.fileURL)
-        .map((img) => ({
-          originalName: img.file.name,
-          fileName: img.file.name,
-          fileSize: img.file.size,
-          extension: img.file.name.split(".").pop() || "",
-          mimeType: img.file.type,
-          fileURL: img.fileURL,
-        })),
-      ...mediaFiles.videos
-        .filter((vid) => vid.uploaded && vid.fileURL)
-        .map((vid) => ({
-          originalName: vid.file.name,
-          fileName: vid.file.name,
-          fileSize: vid.file.size,
-          extension: vid.file.name.split(".").pop() || "",
-          mimeType: vid.file.type,
-          fileURL: vid.fileURL,
-        })),
-    ];
-    setValue("mediaGallery", uploadedMedia);
-
-    // Return the latest form values
-    return {
-      zoneName: "",
-      artifactName: "",
-      description: "",
-      sections: sections,
-      pdfs: uploadedPdfs,
-      mediaGallery: uploadedMedia,
-      profilePicture:
-        profileFile?.uploaded && profileFile.fileURL
-          ? {
-              originalName: profileFile.file.name,
-              fileName: profileFile.file.name,
-              fileSize: profileFile.file.size,
-              extension:
-                profileFile.file.name.split(".").pop() ||
-                "",
-              mimeType: profileFile.file.type,
-              fileURL: profileFile.fileURL,
-            }
-          : undefined,
-    };
-  };
-
-  // Upload a single file
-  const uploadSingleFile = async (
-    file: FileWithPreview,
-    fileType: "profile" | "pdf" | "image" | "video",
-  ) => {
-    if (file.uploaded || file.error) return;
-
-    try {
-      await uploadFile(
-        file.file,
-        fileType === "profile"
-          ? "profile"
-          : fileType === "pdf"
-          ? "pdf"
-          : fileType,
-        Date.now().toString(),
-      );
-    } catch (error) {
-      console.error(
-        `Error uploading ${fileType} file:`,
-        error,
-      );
-    }
-  };
-
-  // Upload files immediately when they're added
-  useEffect(() => {
-    if (
-      profileFile &&
-      !profileFile.uploaded &&
-      !profileFile.error &&
-      profileFile.progress === 0
-    ) {
-      uploadSingleFile(profileFile, "image");
-    }
-  }, [profileFile]);
-
-  useEffect(() => {
-    pdfs.forEach((pdf) => {
-      if (
-        !pdf.uploaded &&
-        !pdf.error &&
-        pdf.progress === 0
-      ) {
-        uploadSingleFile(pdf, "pdf");
-      }
-    });
-  }, [pdfs]);
-
-  useEffect(() => {
-    mediaFiles.images.forEach((image) => {
-      if (
-        !image.uploaded &&
-        !image.error &&
-        image.progress === 0
-      ) {
-        uploadSingleFile(image, "image");
-      }
-    });
-
-    mediaFiles.videos.forEach((video) => {
-      if (
-        !video.uploaded &&
-        !video.error &&
-        video.progress === 0
-      ) {
-        uploadSingleFile(video, "video");
-      }
-    });
-  }, [mediaFiles]);
-
-  // Handle form submission
-  const onSubmit = async (data: FormData) => {
-    setIsSubmitting(true);
-    clearErrors();
-
-    try {
-      // Check if any files are still uploading
-      const isUploading =
-        (profileFile &&
-          profileFile.progress > 0 &&
-          profileFile.progress < 100) ||
-        pdfs.some(
-          (pdf) => pdf.progress > 0 && pdf.progress < 100,
-        ) ||
-        mediaFiles.images.some(
-          (img) => img.progress > 0 && img.progress < 100,
-        ) ||
-        mediaFiles.videos.some(
-          (vid) => vid.progress > 0 && vid.progress < 100,
-        );
-
-      if (isUploading) {
-        setError("root", {
-          message:
-            "Please wait for all file uploads to complete",
-        });
-        setIsSubmitting(false);
-        return;
-      }
-
-      // Check for upload errors
-      const hasErrors =
-        (profileFile && profileFile.error) ||
-        pdfs.some((pdf) => pdf.error) ||
-        mediaFiles.images.some((img) => img.error) ||
-        mediaFiles.videos.some((vid) => vid.error);
-
-      if (hasErrors) {
-        setError("root", {
-          message:
-            "Please fix upload errors before submitting",
-        });
-        setIsSubmitting(false);
-        return;
-      }
-
-      // Prepare data with uploaded files
-      const preparedData = prepareSubmissionData();
-
-      // Submit to artifacts API
-      await axios.post("/api/artifacts", preparedData);
-
-      // Reset form on success
-      reset();
-      setProfileFile(null);
-      setProfilePreview(null);
-      setSections([{ title: "Overview", content: "" }]);
-      setPdfs([]);
-      setMediaFiles({ images: [], videos: [] });
-
-      alert("Artifact created successfully!");
-    } catch (error) {
-      console.error("Error submitting form:", error);
-      setError("root", {
-        message: axios.isAxiosError(error)
-          ? error.response?.data?.message || error.message
-          : "Failed to create artifact",
-      });
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  const createFileWithPreview = (
-    file: File,
-  ): FileWithPreview => ({
-    file,
-    preview: URL.createObjectURL(file),
-    progress: 0,
-    originalName: file.name,
-    fileName: file.name,
-    fileSize: file.size,
-    extension: file.name.split(".").pop() || "",
-    mimeType: file.type,
-    fileURL: "",
-  });
+  // Initialize upload manager
+  const uploadManager = useUploadManager();
 
   // File handlers
   const handleProfilePicture = (files: File[]) => {
     if (files.length > 0) {
-      if (profilePreview)
-        URL.revokeObjectURL(profilePreview);
-      const preview = URL.createObjectURL(files[0]);
-      setProfilePreview(preview);
-      setProfileFile(createFileWithPreview(files[0]));
+      uploadManager.addFile("profile", [files[0]]);
     }
   };
 
   const handlePdfUpload = (files: File[]) => {
-    const pdfFiles = files.map(createFileWithPreview);
-    setPdfs((prev) => [...prev, ...pdfFiles]);
+    uploadManager.addFile("pdf", files);
   };
 
   const handleMediaUpload =
     (type: "image" | "video") => (files: File[]) => {
-      const mediaFiles = files.map(createFileWithPreview);
-      setMediaFiles((prev) => ({
-        ...prev,
-        [type === "image" ? "images" : "videos"]: [
-          ...prev[type === "image" ? "images" : "videos"],
-          ...mediaFiles,
-        ],
-      }));
+      uploadManager.addFile(type, files);
     };
 
   // Delete handlers
@@ -536,29 +75,22 @@ export const useArtifactForm = () => {
     index: number,
     type: "image" | "video",
   ) => {
-    setMediaFiles((prev) => {
-      const newMediaFiles = { ...prev };
-      const fileList =
-        type === "image"
-          ? newMediaFiles.images
-          : newMediaFiles.videos;
-      URL.revokeObjectURL(fileList[index].preview);
-      if (type === "image") {
-        newMediaFiles.images.splice(index, 1);
-      } else {
-        newMediaFiles.videos.splice(index, 1);
-      }
-      return newMediaFiles;
-    });
+    const files =
+      type === "image"
+        ? uploadManager.getFiles().mediaFiles.images
+        : uploadManager.getFiles().mediaFiles.videos;
+    const fileToDelete = files[index];
+    if (fileToDelete) {
+      uploadManager.removeFile(type, fileToDelete.fileName);
+    }
   };
 
   const handlePdfDelete = (index: number) => {
-    setPdfs((prev) => {
-      const newPdfs = [...prev];
-      URL.revokeObjectURL(newPdfs[index].preview);
-      newPdfs.splice(index, 1);
-      return newPdfs;
-    });
+    const pdfs = uploadManager.getFiles().pdfs;
+    const pdfToDelete = pdfs[index];
+    if (pdfToDelete) {
+      uploadManager.removeFile("pdf", pdfToDelete.fileName);
+    }
   };
 
   // Section handlers
@@ -580,24 +112,230 @@ export const useArtifactForm = () => {
     newSections[index] = { title, content };
     setSections(newSections);
     setActiveSection(index);
+
+    // Validate section content
+    if (!title || !content) {
+      setError(`sections.${index}`, {
+        type: "manual",
+        message: "Both title and content are required",
+      });
+    } else {
+      clearErrors(`sections.${index}`);
+    }
   };
 
+  // Convert FileWithPreview to FileType
+  const convertToFileType = (
+    file: FileWithPreview,
+  ): FileType => ({
+    originalName: file.originalName,
+    fileName: file.fileName,
+    fileSize: file.fileSize,
+    extension: file.extension,
+    mimeType: file.mimeType,
+    fileURL: file.fileURL,
+    uploadDate: new Date().toISOString(),
+  });
+
+  // Form submission handler
+  const onSubmit = async (data: FormData) => {
+    console.log("Form submission started");
+    console.log("Received form data:", data);
+
+    setIsSubmitting(true);
+    clearErrors();
+
+    try {
+      // Validate required fields
+      if (!data.zoneName?.trim()) {
+        setError("zoneName", {
+          message: "Zone name is required",
+        });
+        setIsSubmitting(false);
+        return;
+      }
+
+      if (!data.artifactName?.trim()) {
+        setError("artifactName", {
+          message: "Artifact name is required",
+        });
+        setIsSubmitting(false);
+        return;
+      }
+
+      if (!data.description?.trim()) {
+        setError("description", {
+          message: "Description is required",
+        });
+        setIsSubmitting(false);
+        return;
+      }
+
+      // Validate sections
+      if (!sections.length) {
+        setError("sections", {
+          message: "At least one section is required",
+        });
+        setIsSubmitting(false);
+        return;
+      }
+
+      for (let i = 0; i < sections.length; i++) {
+        if (
+          !sections[i].title.trim() ||
+          !sections[i].content.trim()
+        ) {
+          setError(`sections.${i}`, {
+            message: "Both title and content are required",
+          });
+          setIsSubmitting(false);
+          return;
+        }
+      }
+
+      // Debug validation
+      const validationResult =
+        artifactSchema.safeParse(data);
+      if (!validationResult.success) {
+        console.error(
+          "Zod validation failed:",
+          validationResult.error,
+        );
+        setError("root", {
+          message:
+            "Form validation failed. Check all required fields.",
+        });
+        setIsSubmitting(false);
+        return;
+      }
+
+      console.log("Zod validation passed");
+
+      const uploadStatus = uploadManager.getStatus();
+      console.log("Upload status:", uploadStatus);
+
+      // Check if any files are still uploading
+      if (uploadStatus.isUploading) {
+        setError("root", {
+          message:
+            "Please wait for all file uploads to complete",
+        });
+        setIsSubmitting(false);
+        return;
+      }
+
+      // Check for upload errors
+      if (uploadStatus.hasErrors) {
+        setError("root", {
+          message:
+            "Please fix upload errors before submitting",
+        });
+        setIsSubmitting(false);
+        return;
+      }
+
+      // Upload any remaining files
+      await uploadManager.uploadAll();
+
+      // Get all uploaded files
+      const uploadedFiles = uploadManager.getFiles();
+      console.log("Uploaded files:", uploadedFiles);
+
+      // Prepare submission data
+      const submissionData: FormData = {
+        zoneName: data.zoneName.trim(),
+        artifactName: data.artifactName.trim(),
+        description: data.description.trim(),
+        sections: sections.map((section) => ({
+          title: section.title.trim(),
+          content: section.content.trim(),
+        })),
+        pdfs: uploadedFiles.pdfs.map(convertToFileType),
+        mediaGallery: [
+          ...uploadedFiles.mediaFiles.images.map(
+            convertToFileType,
+          ),
+          ...uploadedFiles.mediaFiles.videos.map(
+            convertToFileType,
+          ),
+        ],
+        profilePicture: uploadedFiles.profilePicture
+          ? convertToFileType(uploadedFiles.profilePicture)
+          : undefined,
+      };
+
+      console.log("Final submission data:", submissionData);
+
+      // Validate submission data
+      const finalValidation =
+        artifactSchema.safeParse(submissionData);
+      if (!finalValidation.success) {
+        console.error(
+          "Final validation failed:",
+          finalValidation.error,
+        );
+        setError("root", {
+          message: "Invalid form data structure",
+        });
+        setIsSubmitting(false);
+        return;
+      }
+
+      console.log(
+        "Final validation passed, submitting to API",
+      );
+
+      // Submit to artifacts API
+      await axios.post("/api/artifacts", submissionData);
+
+      console.log("API submission successful");
+
+      // Reset form state
+      reset();
+      setSections([{ title: "Overview", content: "" }]);
+      uploadManager.reset();
+      setActiveSection(0);
+
+      alert("Artifact created successfully!");
+    } catch (error) {
+      console.error("Error submitting form:", error);
+      setError("root", {
+        message: axios.isAxiosError(error)
+          ? error.response?.data?.message || error.message
+          : "Failed to create artifact",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const files = uploadManager.getFiles();
+  const uploadStatus = uploadManager.getStatus();
+
   return {
+    // Form state
     register,
     errors,
     isSubmitting,
     handleSubmit: handleSubmit(onSubmit),
+
+    // Section management
     sections,
     activeSection,
     addNewSection,
     handleSectionChange,
-    profilePreview,
-    profileFile,
+
+    // File management
+    profilePreview: files.profilePicture?.preview || null,
+    profileFile: files.profilePicture,
+    pdfs: files.pdfs,
+    mediaFiles: files.mediaFiles,
+    uploadStatus,
+
+    // File handlers
     handleProfilePicture,
-    pdfs,
     handlePdfUpload,
     handlePdfDelete,
-    mediaFiles,
     handleMediaUpload,
     handleMediaDelete,
   };
