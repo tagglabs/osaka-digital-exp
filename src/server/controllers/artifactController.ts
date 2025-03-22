@@ -29,6 +29,7 @@ const artifactSchema = z.object({
     .string()
     .min(3, "Artifact name must be at least 3 characters"),
   description: z.string().optional(),
+  profilePicture: fileSchema,
   sections: z
     .array(sectionSchema)
     .min(1, "At least one section is required"),
@@ -163,13 +164,14 @@ export const artifactController = {
         throw new ApiError(404, errorMessages.NOT_FOUND);
       }
 
-      // Delete files from S3
+      // Delete files from S3 including profile picture
       const filesToDelete = [
         ...(artifact.pdfs?.map((file) => file.fileURL) ||
           []),
         ...(artifact.mediaGallery?.map(
           (file) => file.fileURL,
         ) || []),
+        artifact.profilePicture.fileURL,
       ];
 
       if (filesToDelete.length > 0) {

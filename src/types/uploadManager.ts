@@ -17,7 +17,7 @@ export interface MediaGallery {
 
 // Storage state for selected files before upload
 export interface FileStorageState {
-  profilePicture: File | null;
+  profilePicture: File;
   pdfs: File[];
   media: {
     images: File[];
@@ -27,7 +27,7 @@ export interface FileStorageState {
 
 // Upload result structure
 export interface UploadResult {
-  profilePicture?: FileDetails;
+  profilePicture: FileDetails;
   pdfs: FileDetails[];
   mediaGallery: MediaGallery;
 }

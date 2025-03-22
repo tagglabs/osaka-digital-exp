@@ -21,6 +21,7 @@ export interface IArtifact {
     title: string;
     content: string;
   }>;
+  profilePicture: FileMetadata;
   pdfs?: FileMetadata[];
   mediaGallery?: FileMetadata[];
   externalURL?: string;
@@ -65,6 +66,10 @@ const artifactSchema = new mongoose.Schema<IArtifact>(
     description: {
       type: String,
       required: false,
+    },
+    profilePicture: {
+      type: fileMetadataSchema,
+      required: [true, "Profile picture is required"],
     },
     sections: [
       {
