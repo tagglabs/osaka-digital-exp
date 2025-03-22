@@ -1,16 +1,36 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
-import { APIResponse, Artifact } from "../types/artifacts";
 import Trash from "../assets/trash.png";
 import { Button } from "../Components/Button";
+
+// API response type that matches the actual server response
+interface APIArtifact {
+  id: string;
+  zoneName: string;
+  artifactName: string;
+  description: string;
+  profilePicture: string;
+  sections: { title: string; content: string; }[];
+  pdfs: string[];
+  mediaGallery: string[];
+  externalURL?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+interface APIResponse<T> {
+  success: boolean;
+  data?: T;
+  error?: string;
+}
 
 interface ArtifactPreviewProps {
   id: string;
   profilePicture: string;
   zoneName: string;
-  nameOfArtifact: string;
-  briefDescription: string;
+  artifactName: string;
+  description: string;
   onDelete: (id: string) => void;
 }
 
@@ -18,10 +38,11 @@ const ArtifactPreview = ({
   id,
   profilePicture,
   zoneName,
-  nameOfArtifact,
-  briefDescription,
+  artifactName,
+  description,
   onDelete,
 }: ArtifactPreviewProps) => {
+  console.log("profilePicture", profilePicture);
   const navigate = useNavigate();
 
   return (
@@ -30,7 +51,7 @@ const ArtifactPreview = ({
         <div className="w-[100px] h-[100px] rounded-md overflow-hidden flex-shrink-0">
           <img
             src={profilePicture}
-            alt={nameOfArtifact}
+            alt={artifactName}
             className="w-full h-full object-cover"
           />
         </div>
@@ -38,10 +59,10 @@ const ArtifactPreview = ({
           <div className="flex justify-between items-start w-full">
             <div>
               <p className="text-sm text-gray-primary uppercase mb-1">{zoneName}</p>
-              <h3 className="text-lg font-semibold mb-2">{nameOfArtifact}</h3>
+              <h3 className="text-lg font-semibold mb-2">{artifactName}</h3>
             </div>
           </div>
-          <p className="text-gray-600 text-sm line-clamp-2">{briefDescription}</p>
+          <p className="text-gray-600 text-sm line-clamp-2">{description}</p>
         </div>
       </div>
       <div className="flex items-center gap-4 ml-4">
@@ -77,7 +98,7 @@ const ArtifactPreview = ({
 
 export const Dashboard = () => {
   const navigate = useNavigate();
-  const [artifacts, setArtifacts] = useState<Artifact[]>([]);
+  const [artifacts, setArtifacts] = useState<APIArtifact[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -86,7 +107,7 @@ export const Dashboard = () => {
       try {
         const response = await axios.delete<APIResponse<void>>(`/api/artifacts/${id}`);
         if (response.data.success) {
-          setArtifacts(artifacts.filter(artifact => artifact._id !== id));
+          setArtifacts(artifacts.filter(artifact => artifact.id !== id));
         } else {
           throw new Error(response.data.error || "Failed to delete artifact");
         }
@@ -101,11 +122,11 @@ export const Dashboard = () => {
   useEffect(() => {
     const fetchArtifacts = async () => {
       try {
-        const response = await axios.get<APIResponse<Artifact[]>>("/api/artifacts");
-        if (response.data.success && response.data.data) {
-          setArtifacts(response.data.data);
+        const response = await axios.get<APIArtifact[]>("/api/artifacts");
+        if (response.data) {
+          setArtifacts(response.data);
         } else {
-          throw new Error(response.data.error || "Failed to fetch artifacts");
+          throw new Error("Failed to fetch artifacts");
         }
       } catch (err) {
         const errorMessage = err instanceof Error ? err.message : "Failed to fetch artifacts";
@@ -148,12 +169,12 @@ export const Dashboard = () => {
       <div className="grid gap-4">
         {artifacts.map((artifact) => (
           <ArtifactPreview
-            key={artifact._id}
-            id={artifact._id || ""}
-            profilePicture={artifact.profilePicture || ""}
+            key={artifact.id}
+            id={artifact.id}
+            profilePicture={artifact.profilePicture}
             zoneName={artifact.zoneName}
-            nameOfArtifact={artifact.nameOfArtifact}
-            briefDescription={artifact.briefDescription}
+            artifactName={artifact.artifactName}
+            description={artifact.description}
             onDelete={handleDelete}
           />
         ))}
