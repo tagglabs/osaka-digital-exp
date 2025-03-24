@@ -23,6 +23,7 @@ export interface IArtifact {
   }>;
   profilePicture: FileMetadata;
   pdfs?: FileMetadata[];
+  audioGuide?: FileMetadata;
   mediaGallery?: FileMetadata[];
   externalURL?: string;
   createdAt: Date;

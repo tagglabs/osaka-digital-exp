@@ -17,9 +17,21 @@
     url("./assets/fonts/IbarraRealNova-VariableFont_wght.ttf");
 }
 
+@font-face {
+  font-family: "Gilory Medium";
+  src: local(), url("./assets/fonts/gilroy-medium.ttf");
+}
+
+@font-face {
+  font-family: "Inter";
+  src: local(),
+    url("./assets/fonts/Inter-VariableFont_opsz_wght.ttf");
+}
+
 @theme {
   --font-inter: "Inter", sans-serif;
   --font-title: "Ibbara Real Nova", sans-serif;
+  --font-gilroy: "Gilory Medium", sans-serif;
 }
 
 @theme {

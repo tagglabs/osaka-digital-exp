@@ -17,21 +17,21 @@ function App() {
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<Home />} />
-          <Route 
-            path="/cms" 
+          <Route
+            path="/cms"
             element={
               <ProtectedRoute>
                 <Cms />
               </ProtectedRoute>
-            } 
+            }
           />
-          <Route 
-            path="/dashboard" 
+          <Route
+            path="/dashboard"
             element={
               <ProtectedRoute>
                 <Dashboard />
               </ProtectedRoute>
-            } 
+            }
           />
           <Route
             path="/artifact/:id"
