@@ -18,6 +18,7 @@ export interface MediaGallery {
 // Storage state for selected files before upload
 export interface FileStorageState {
   profilePicture: File | null;
+  audioGuide: File | null;
   pdfs: File[];
   media: {
     images: File[];
@@ -28,6 +29,7 @@ export interface FileStorageState {
 // Upload result structure
 export interface UploadResult {
   profilePicture?: FileDetails;
+  audioGuide?: FileDetails;
   pdfs: FileDetails[];
   mediaGallery: MediaGallery;
 }
@@ -37,7 +39,8 @@ export type FileType =
   | "profile"
   | "pdf"
   | "image"
-  | "video";
+  | "video"
+  | "audio";
 
 // Upload Manager Interface
 export interface UploadManager {

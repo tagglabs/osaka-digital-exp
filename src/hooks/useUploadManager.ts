@@ -11,6 +11,7 @@ import {
 // Initial state
 const initialState: FileStorageState = {
   profilePicture: null,
+  audioGuide: null,
   pdfs: [],
   media: {
     images: [],
@@ -62,6 +63,12 @@ export const useUploadManager = (): UploadManager => {
               ...prev,
               profilePicture: files[0],
             };
+          case "audio":
+            // Only keep the last file for audio guide
+            return {
+              ...prev,
+              audioGuide: files[0],
+            };
           case "pdf":
             return {
               ...prev,
@@ -97,6 +104,11 @@ export const useUploadManager = (): UploadManager => {
             return {
               ...prev,
               profilePicture: null,
+            };
+          case "audio":
+            return {
+              ...prev,
+              audioGuide: null,
             };
           case "pdf":
             return {
@@ -138,6 +150,11 @@ export const useUploadManager = (): UploadManager => {
         ? uploadFile(state.profilePicture, "profile")
         : Promise.resolve(undefined);
 
+      // Handle audio guide
+      const audioPromise = state.audioGuide
+        ? uploadFile(state.audioGuide, "audio")
+        : Promise.resolve(undefined);
+
       // Handle PDFs
       const pdfsPromise = Promise.all(
         state.pdfs.map((file) => uploadFile(file, "pdf")),
@@ -156,9 +173,10 @@ export const useUploadManager = (): UploadManager => {
       );
 
       // Wait for all uploads to complete
-      const [profilePicture, pdfs, images, videos] =
+      const [profilePicture, audioGuide, pdfs, images, videos] =
         await Promise.all([
           profilePromise,
+          audioPromise,
           pdfsPromise,
           imagesPromise,
           videosPromise,
@@ -166,6 +184,7 @@ export const useUploadManager = (): UploadManager => {
 
       return {
         profilePicture,
+        audioGuide,
         pdfs,
         mediaGallery: {
           images,

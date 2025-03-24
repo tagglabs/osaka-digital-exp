@@ -3,6 +3,7 @@ import { Section } from "../Components/Section";
 import { useArtifactForm } from "../hooks/useArtifactForm";
 import ArtifactDetails from "../Components/ArtifactDetails";
 import DocumentUploads from "../Components/DocumentUploads";
+import AudioUpload from "../Components/AudioUpload";
 import MediaGallery from "../Components/MediaGallery";
 
 function Cms() {
@@ -18,9 +19,11 @@ function Cms() {
     profilePreview,
     pdfs,
     mediaFiles,
+    audioFile,
     handleProfilePicture,
     handlePdfUpload,
     handlePdfDelete,
+    handleAudioUpload,
     handleMediaUpload,
     handleMediaDelete,
   } = useArtifactForm();
@@ -63,6 +66,14 @@ function Cms() {
         onFileUpload={handlePdfUpload}
         onDelete={handlePdfDelete}
         error={errors.pdfs?.message}
+      />
+
+      {/* Audio Guide */}
+      <AudioUpload
+        audioFile={audioFile}
+        onFileUpload={handleAudioUpload}
+        // onDelete={() => handleAudioUpload()}
+        error={errors.audioGuide?.message}
       />
 
       {/* Media Gallery */}
