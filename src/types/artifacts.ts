@@ -35,7 +35,7 @@ export const artifactSchema = z.object({
     .array(sectionSchema)
     .min(1, "At least one section is required"),
   pdfs: pdfSchema, // Multiple PDFs
-  audioGuide: fileSchema, // Single audio guide
+  audioGuide: fileSchema.optional(), // Single audio guide
   mediaGallery: mediaGallerySchema, // Multiple images/videos
   externalURL: z.string().url().optional(), // Optional external reference link
   createdAt: z.string().optional(), // Timestamp (ISO format)
