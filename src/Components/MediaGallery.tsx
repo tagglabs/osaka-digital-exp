@@ -2,6 +2,8 @@ import React, { useState } from "react";
 import { SelectFileType } from "../Components/SelectFileType";
 import { Dropzone } from "../Components/Dropzone";
 import { UploadPreview } from "../Components/UploadPreview";
+import { FileDetails, MediaGallery as MediaGalleryType } from "../types/uploadManager";
+
 interface MediaState {
   images: File[];
   videos: File[];
@@ -9,6 +11,7 @@ interface MediaState {
 
 interface MediaGalleryProps {
   mediaFiles: MediaState;
+  existingFiles?: MediaGalleryType;
   onImageUpload: (files: File[]) => void;
   onVideoUpload: (files: File[]) => void;
   onDelete: (
@@ -20,6 +23,7 @@ interface MediaGalleryProps {
 
 const MediaGallery: React.FC<MediaGalleryProps> = ({
   mediaFiles,
+  existingFiles = { images: [], videos: [] },
   onImageUpload,
   onVideoUpload,
   onDelete,
@@ -29,14 +33,34 @@ const MediaGallery: React.FC<MediaGalleryProps> = ({
     "image" | "video"
   >("image");
 
-  const currentMedia =
-    activeMediaType === "image"
-      ? mediaFiles.images
-      : mediaFiles.videos;
-  const handleUpload =
-    activeMediaType === "image"
-      ? onImageUpload
-      : onVideoUpload;
+  const currentMedia = activeMediaType === "image"
+    ? [...existingFiles.images, ...mediaFiles.images]
+    : [...existingFiles.videos, ...mediaFiles.videos];
+  
+  const handleUpload = activeMediaType === "image"
+    ? onImageUpload
+    : onVideoUpload;
+
+  const getFilePreview = (file: File | FileDetails) => {
+    if ('fileURL' in file) {
+      return file.fileURL;
+    }
+    return URL.createObjectURL(file);
+  };
+
+  const getFileName = (file: File | FileDetails) => {
+    if ('originalName' in file) {
+      return file.originalName;
+    }
+    return file.name;
+  };
+
+  const getFileSize = (file: File | FileDetails) => {
+    if ('fileSize' in file) {
+      return file.fileSize;
+    }
+    return file.size;
+  };
 
   return (
     <div className="flex flex-col gap-4">
@@ -85,13 +109,13 @@ const MediaGallery: React.FC<MediaGalleryProps> = ({
               <div className="w-20 h-20 rounded overflow-hidden">
                 {activeMediaType === "image" ? (
                   <img
-                    src={URL.createObjectURL(file)}
-                    alt={file.name}
+                    src={getFilePreview(file)}
+                    alt={getFileName(file)}
                     className="w-full h-full object-cover"
                   />
                 ) : (
                   <video
-                    src={URL.createObjectURL(file)}
+                    src={getFilePreview(file)}
                     className="w-full h-full object-cover"
                     controls
                   />
@@ -101,8 +125,8 @@ const MediaGallery: React.FC<MediaGalleryProps> = ({
               {/* File Info */}
               <div className="flex-1">
                 <UploadPreview
-                  fileName={file.name}
-                  fileSize={file.size}
+                  fileName={getFileName(file)}
+                  fileSize={getFileSize(file)}
                   onDelete={() =>
                     onDelete(index, activeMediaType)
                   }

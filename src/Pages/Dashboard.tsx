@@ -3,22 +3,9 @@ import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import Trash from "../assets/trash.png";
 import { Button } from "../Components/Button";
+import { FormData, FileType } from "../types/artifacts";
 
-// API response type that matches the actual server response
-interface APIArtifact {
-  id: string;
-  zoneName: string;
-  artifactName: string;
-  description: string;
-  profilePicture: string;
-  sections: { title: string; content: string; }[];
-  pdfs: string[];
-  mediaGallery: string[];
-  externalURL?: string;
-  createdAt: string;
-  updatedAt: string;
-}
-
+// API response types
 interface APIResponse<T> {
   success: boolean;
   data?: T;
@@ -27,7 +14,7 @@ interface APIResponse<T> {
 
 interface ArtifactPreviewProps {
   id: string;
-  profilePicture: string;
+  profilePicture?: FileType;
   zoneName: string;
   artifactName: string;
   description: string;
@@ -42,7 +29,6 @@ const ArtifactPreview = ({
   description,
   onDelete,
 }: ArtifactPreviewProps) => {
-  console.log("profilePicture", profilePicture);
   const navigate = useNavigate();
 
   return (
@@ -50,7 +36,7 @@ const ArtifactPreview = ({
       <div className="flex items-start gap-4 flex-grow">
         <div className="w-[100px] h-[100px] rounded-md overflow-hidden flex-shrink-0">
           <img
-            src={profilePicture}
+            src={profilePicture?.fileURL || '/placeholder-image.jpg'}
             alt={artifactName}
             className="w-full h-full object-cover"
           />
@@ -95,6 +81,11 @@ const ArtifactPreview = ({
     </div>
   );
 };
+
+// Extend FormData type to include id for API responses
+interface APIArtifact extends FormData {
+  id: string;
+}
 
 export const Dashboard = () => {
   const navigate = useNavigate();
