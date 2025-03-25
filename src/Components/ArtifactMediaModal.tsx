@@ -10,7 +10,7 @@ interface ArtifactMediaModalProps {
   mediaGallery?: FileType[];
   pdfs?: FileType[];
   studyMaterials?: { title: string; url: string }[];
-  audioGuides?: FileType[];
+  audioGuide?: FileType;
 }
 
 export default function ArtifactMediaModal({
@@ -21,7 +21,7 @@ export default function ArtifactMediaModal({
   mediaGallery = [],
   pdfs = [],
   studyMaterials = [],
-  audioGuides = [],
+  audioGuide,
 }: ArtifactMediaModalProps) {
   const [visible, setVisible] = useState(false);
   const [display, setDisplay] = useState(isOpen);
@@ -133,32 +133,24 @@ export default function ArtifactMediaModal({
           </section>
         )}
 
-        {/* Audio Guides Section */}
-        {audioGuides.length > 0 && (
+        {/* Audio Guide Section */}
+        {audioGuide && (
           <section className="pb-4 pt-8 border-b border-gray-200">
             <h2 className="text-lg mb-4 font-gilroy">
-              Audio Guides
+              Audio Guide
             </h2>
-            <div className="space-y-4">
-              {audioGuides.map((audio, index) => (
-                <div
-                  key={index}
-                  className="bg-gray-50 rounded-lg p-4 space-y-2"
-                >
-                  <div className="font-medium text-gray-900">
-                    {audio.originalName ||
-                      `Audio Guide ${index + 1}`}
-                  </div>
-                  <audio controls className="w-full">
-                    <source
-                      src={audio.fileURL}
-                      type={audio.mimeType}
-                    />
-                    Your browser does not support the audio
-                    element.
-                  </audio>
-                </div>
-              ))}
+            <div className="bg-gray-50 rounded-lg p-4 space-y-2">
+              <div className="font-medium text-gray-900">
+                {audioGuide.originalName || "Audio Guide"}
+              </div>
+              <audio controls className="w-full">
+                <source
+                  src={audioGuide.fileURL}
+                  type={audioGuide.mimeType}
+                />
+                Your browser does not support the audio
+                element.
+              </audio>
             </div>
           </section>
         )}

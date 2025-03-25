@@ -16,7 +16,7 @@ interface Artifact {
   pdfs?: FileType[];
   mediaGallery?: FileType[];
   studyMaterials?: { title: string; url: string }[];
-  audioGuides?: FileType[];
+  audioGuide?: FileType;
 }
 
 function ArtifactDetails() {
@@ -88,7 +88,7 @@ function ArtifactDetails() {
         mediaGallery={artifact.mediaGallery}
         pdfs={artifact.pdfs}
         studyMaterials={artifact.studyMaterials}
-        audioGuides={artifact.audioGuides}
+        audioGuide={artifact.audioGuide}
       />
 
       {/* Image Content */}

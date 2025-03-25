@@ -56,7 +56,7 @@ export class S3Service {
 
   static async uploadFile(
     file: Express.Multer.File,
-    type: "image" | "video" | "pdf" | "profile",
+    type: "image" | "video" | "pdf" | "audio" | "profile",
   ): Promise<{ fileURL: string }> {
     try {
       // Validate file type
@@ -66,6 +66,8 @@ export class S3Service {
           ? uploadConfig.allowedImageTypes
           : type === "video"
           ? uploadConfig.allowedVideoTypes
+          : type === "audio"
+          ? uploadConfig.allowedAudioTypes
           : uploadConfig.allowedPdfTypes;
 
       if (!validTypes.includes(mimeType)) {
@@ -96,6 +98,8 @@ export class S3Service {
           ? "images/"
           : type === "video"
           ? "videos/"
+          : type === "audio"
+          ? "audio/"
           : "pdfs/";
       const fullPath = folderPath + fileName;
 

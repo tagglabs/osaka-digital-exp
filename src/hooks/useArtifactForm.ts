@@ -124,7 +124,6 @@ export const useArtifactForm = () => {
 
   // Form submission handler
   const onSubmit = async (data: FormData) => {
-    console.log({"data": data});
     setIsSubmitting(true);
     clearErrors();
 
@@ -145,7 +144,6 @@ export const useArtifactForm = () => {
         setIsSubmitting(false);
         return;
       }
-
 
       if (!data.artifactName?.trim()) {
         setError("artifactName", {

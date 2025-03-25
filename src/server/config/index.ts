@@ -80,6 +80,12 @@ export const uploadConfig = {
   ],
   allowedVideoTypes: ["video/mp4", "video/webm"],
   allowedPdfTypes: ["application/pdf"],
+  allowedAudioTypes: [
+    "audio/mpeg",
+    "audio/wav",
+    "audio/ogg",
+    "audio/mp3",
+  ],
 };
 
 // API paths configuration

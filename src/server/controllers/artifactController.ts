@@ -34,6 +34,8 @@ const artifactSchema = z.object({
     .array(sectionSchema)
     .min(1, "At least one section is required"),
   pdfs: z.array(fileSchema).optional(),
+  audioGuide: fileSchema.optional(),
+  referenceLinks: z.array(z.string().url()).optional(),
   mediaGallery: z.array(fileSchema).optional(),
   externalURL: z.string().url().optional(),
 });

@@ -24,6 +24,7 @@ export interface IArtifact {
   profilePicture: FileMetadata;
   pdfs?: FileMetadata[];
   audioGuide?: FileMetadata;
+  referenceLinks: string[];
   mediaGallery?: FileMetadata[];
   externalURL?: string;
   createdAt: Date;
@@ -88,6 +89,22 @@ const artifactSchema = new mongoose.Schema<IArtifact>(
     pdfs: {
       type: [fileMetadataSchema],
       required: false,
+    },
+    audioGuide: {
+      type: fileMetadataSchema,
+      required: false,
+    },
+    referenceLinks: {
+      type: [String],
+      required: true,
+      validate: {
+        validator: function (v: string[]) {
+          return v.every((link) =>
+            Boolean(link.match(/^https?:\/\/.+\..+$/)),
+          );
+        },
+        message: "Invalid URL format",
+      },
     },
     mediaGallery: {
       type: [fileMetadataSchema],
