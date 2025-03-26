@@ -16,7 +16,9 @@ export const useArtifactForm = () => {
   const [sections, setSections] = useState<SectionType[]>([
     { title: "Overview", content: "" },
   ]);
-  const [referenceLinks, setReferenceLinks] = useState<string[]>([]);
+  const [referenceLinks, setReferenceLinks] = useState<
+    string[]
+  >([]);
 
   // Initialize upload manager and form
   const uploadManager = useUploadManager();
@@ -98,19 +100,25 @@ export const useArtifactForm = () => {
     if (!url.trim()) return;
     try {
       new URL(url); // Validate URL
-      setReferenceLinks(prev => [...prev, url]);
+      setReferenceLinks((prev) => [...prev, url]);
       setValue("referenceLinks", [...referenceLinks, url]);
     } catch (e) {
+      console.error("Invalid URL:", e);
       setError("referenceLinks", {
         type: "manual",
-        message: "Please enter a valid URL"
+        message: "Please enter a valid URL",
       });
     }
   };
 
   const deleteReferenceLink = (index: number) => {
-    setReferenceLinks(prev => prev.filter((_, i) => i !== index));
-    setValue("referenceLinks", referenceLinks.filter((_, i) => i !== index));
+    setReferenceLinks((prev) =>
+      prev.filter((_, i) => i !== index),
+    );
+    setValue(
+      "referenceLinks",
+      referenceLinks.filter((_, i) => i !== index),
+    );
   };
 
   // Section handlers
