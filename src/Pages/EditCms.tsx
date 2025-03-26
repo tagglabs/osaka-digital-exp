@@ -1,11 +1,11 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useParams } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import axios from "axios";
 import { Button } from "../Components/Button";
 import { Section } from "../Components/Section";
-import { useArtifactForm } from "../hooks/useArtifactForm";
+import { useUploadManager } from "../hooks/useUploadManager";
 import ArtifactDetails from "../Components/ArtifactDetails";
 import DocumentUploads from "../Components/DocumentUploads";
 import MediaGallery from "../Components/MediaGallery";
@@ -16,6 +16,7 @@ import { FileDetails, MediaGallery as MediaGalleryType } from "../types/uploadMa
 function EditCms() {
   const { id } = useParams<{ id: string }>();
   const [isLoading, setIsLoading] = useState(true);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [existingProfile, setExistingProfile] = useState<FileDetails | null>(null);
   const [existingPdfs, setExistingPdfs] = useState<FileDetails[]>([]);
   const [existingAudio, setExistingAudio] = useState<FileDetails | null>(null);
@@ -39,19 +40,46 @@ function EditCms() {
     }
   });
 
-  const {
-    isSubmitting,
-    profilePreview: newProfilePreview,
-    pdfs: newPdfs,
-    mediaFiles: newMediaFiles,
-    handleProfilePicture,
-    handlePdfUpload,
-    handlePdfDelete,
-    handleMediaUpload,
-    handleMediaDelete,
-    audioFile: newAudioFile,
-    handleAudioUpload,
-  } = useArtifactForm();
+  const uploadManager = useUploadManager();
+  const uploadedFiles = uploadManager.getSelectedFiles();
+
+  const handleProfilePicture = (files: File[]) => {
+    if (files.length > 0) {
+      uploadManager.addFile("profile", [files[0]]);
+      setExistingProfile(null); // Clear existing when new one is uploaded
+    }
+  };
+
+  const handlePdfUpload = (files: File[]) => {
+    uploadManager.addFile("pdf", files);
+  };
+
+  const handleMediaUpload = (type: "image" | "video") => (files: File[]) => {
+    uploadManager.addFile(type, files);
+  };
+
+  const handleMediaDelete = (index: number, type: "image" | "video") => {
+    const files = type === "image" ? uploadedFiles.media.images : uploadedFiles.media.videos;
+    const fileToDelete = files[index];
+    if (fileToDelete) {
+      uploadManager.removeFile(type, fileToDelete.name);
+    }
+  };
+
+  const handlePdfDelete = (index: number) => {
+    const pdfs = uploadedFiles.pdfs;
+    const pdfToDelete = pdfs[index];
+    if (pdfToDelete) {
+      uploadManager.removeFile("pdf", pdfToDelete.name);
+    }
+  };
+
+  const handleAudioUpload = (files: File[]) => {
+    if (files.length > 0) {
+      uploadManager.addFile("audio", [files[0]]);
+      setExistingAudio(null); // Clear existing when new one is uploaded
+    }
+  };
 
 
   const handleSectionChange = (index: number, title: string, content: string) => {
@@ -154,27 +182,56 @@ function EditCms() {
 
   const handleFormSubmit = async (formData: FormData) => {
     if (!id) return;
+    setIsSubmitting(true);
     
     try {
-      // Combine existing and new media files
-      const mediaGallery = [
-        ...existingMedia.images,
-        ...existingMedia.videos,
-        ...formData.mediaGallery || []
-      ];
+      // First upload all new files
+      const uploadResult = await uploadManager.uploadAll();
 
+      // Combine existing and newly uploaded files
       const updateData = {
         ...formData,
-        pdfs: [...existingPdfs, ...formData.pdfs || []],
-        mediaGallery,
-        profilePicture: existingProfile || formData.profilePicture,
-        audioGuide: existingAudio || formData.audioGuide
+        pdfs: [
+          ...existingPdfs,
+          ...uploadResult.pdfs.map(file => ({
+            ...file,
+            uploadDate: new Date().toISOString()
+          }))
+        ],
+        mediaGallery: [
+          ...existingMedia.images,
+          ...existingMedia.videos,
+          ...uploadResult.mediaGallery.images.map(file => ({
+            ...file,
+            uploadDate: new Date().toISOString()
+          })),
+          ...uploadResult.mediaGallery.videos.map(file => ({
+            ...file,
+            uploadDate: new Date().toISOString()
+          }))
+        ],
+        profilePicture: uploadResult.profilePicture ? {
+          ...uploadResult.profilePicture,
+          uploadDate: new Date().toISOString()
+        } : existingProfile,
+        audioGuide: uploadResult.audioGuide ? {
+          ...uploadResult.audioGuide,
+          uploadDate: new Date().toISOString()
+        } : existingAudio
       };
 
       await axios.put(`/api/artifacts/${id}`, updateData);
       alert("Artifact updated successfully!");
+      uploadManager.reset();
     } catch (error) {
       console.error("Error updating artifact:", error);
+      form.setError("root", {
+        message: axios.isAxiosError(error)
+          ? error.response?.data?.message || error.message
+          : "Failed to update artifact"
+      });
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -215,7 +272,7 @@ function EditCms() {
             });
           }
         }}
-        profilePreview={existingProfile?.fileURL || newProfilePreview || form.getValues().profilePicture?.fileURL || null}
+        profilePreview={existingProfile?.fileURL || (uploadedFiles.profilePicture ? URL.createObjectURL(uploadedFiles.profilePicture) : null)}
       />
 
       {/* Sections */}
@@ -239,7 +296,7 @@ function EditCms() {
 
       {/* Audio Guide */}
       <AudioUpload
-        audioFile={newAudioFile}
+        audioFile={uploadedFiles.audioGuide}
         existingAudioUrl={existingAudio?.fileURL}
         onFileUpload={handleAudioUpload}
         onDelete={() => setExistingAudio(null)}
@@ -248,7 +305,7 @@ function EditCms() {
 
       {/* PDF Documents */}
       <DocumentUploads
-        pdfs={[...existingPdfFiles, ...newPdfs]}
+        pdfs={[...existingPdfFiles, ...uploadedFiles.pdfs]}
         onFileUpload={handlePdfUpload}
         onDelete={(index) => {
           if (index < existingPdfs.length) {
@@ -262,7 +319,7 @@ function EditCms() {
 
       {/* Media Gallery */}
       <MediaGallery
-        mediaFiles={newMediaFiles}
+        mediaFiles={uploadedFiles.media}
         existingFiles={existingMedia}
         onImageUpload={(files) => handleMediaUpload("image")(files)}
         onVideoUpload={(files) => handleMediaUpload("video")(files)}
