@@ -201,4 +201,111 @@ export const artifactController = {
       );
     }
   },
+
+  // Edit artifact
+  async editArtifact(req: Request, res: Response) {
+    try {
+      // Validate request body
+      const validatedData = artifactSchema.parse(req.body);
+
+      // Get original artifact
+      const originalArtifact = await Artifact.findById(
+        req.params.id,
+      );
+      if (!originalArtifact) {
+        throw new ApiError(404, errorMessages.NOT_FOUND);
+      }
+
+      // Find files to delete (files in original but not in new data)
+      const filesToDelete: string[] = [];
+
+      // Check profile picture
+      if (
+        originalArtifact.profilePicture.fileURL !==
+        validatedData.profilePicture.fileURL
+      ) {
+        filesToDelete.push(
+          originalArtifact.profilePicture.fileURL,
+        );
+      }
+
+      // Check PDFs
+      const oldPdfUrls =
+        originalArtifact.pdfs?.map((pdf) => pdf.fileURL) ||
+        [];
+      const newPdfUrls =
+        validatedData.pdfs?.map((pdf) => pdf.fileURL) || [];
+      oldPdfUrls.forEach((url) => {
+        if (!newPdfUrls.includes(url)) {
+          filesToDelete.push(url);
+        }
+      });
+
+      // Check media gallery
+      const oldMediaUrls =
+        originalArtifact.mediaGallery?.map(
+          (media) => media.fileURL,
+        ) || [];
+      const newMediaUrls =
+        validatedData.mediaGallery?.map(
+          (media) => media.fileURL,
+        ) || [];
+      oldMediaUrls.forEach((url) => {
+        if (!newMediaUrls.includes(url)) {
+          filesToDelete.push(url);
+        }
+      });
+
+      // Check audio guide
+      if (
+        originalArtifact.audioGuide?.fileURL &&
+        (!validatedData.audioGuide ||
+          originalArtifact.audioGuide.fileURL !==
+            validatedData.audioGuide.fileURL)
+      ) {
+        filesToDelete.push(
+          originalArtifact.audioGuide.fileURL,
+        );
+      }
+
+      // Delete removed files from S3
+      if (filesToDelete.length > 0) {
+        await Promise.all(
+          filesToDelete.map((fileUrl) =>
+            S3Service.deleteFile(fileUrl),
+          ),
+        );
+      }
+
+      // Update artifact in database
+      const updatedArtifact =
+        await Artifact.findByIdAndUpdate(
+          req.params.id,
+          {
+            ...validatedData,
+            updatedAt: new Date(),
+          },
+          { new: true },
+        );
+
+      res.json(updatedArtifact);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        throw new ApiError(
+          400,
+          JSON.stringify(error.errors),
+        );
+      }
+      if (error instanceof ApiError) {
+        throw error;
+      }
+      console.error("Edit artifact error:", error);
+      throw new ApiError(
+        500,
+        error instanceof Error
+          ? error.message
+          : errorMessages.DATABASE_ERROR,
+      );
+    }
+  },
 };

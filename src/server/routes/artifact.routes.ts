@@ -65,4 +65,12 @@ router.delete(
   ),
 );
 
+// Edit artifact route
+router.put(
+  "/artifacts/:id",
+  asyncHandler(
+    artifactController.editArtifact as RequestHandler,
+  ),
+);
+
 export default router;

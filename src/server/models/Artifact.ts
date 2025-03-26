@@ -24,7 +24,7 @@ export interface IArtifact {
   profilePicture: FileMetadata;
   pdfs?: FileMetadata[];
   audioGuide?: FileMetadata;
-  referenceLinks: string[];
+  referenceLinks?: string[];
   mediaGallery?: FileMetadata[];
   externalURL?: string;
   createdAt: Date;
@@ -96,7 +96,7 @@ const artifactSchema = new mongoose.Schema<IArtifact>(
     },
     referenceLinks: {
       type: [String],
-      required: true,
+      required: false,
       validate: {
         validator: function (v: string[]) {
           return v.every((link) =>
