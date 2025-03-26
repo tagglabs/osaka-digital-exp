@@ -1,10 +1,12 @@
 import { Button } from "../Components/Button";
+import { Input } from "../Components/Input";
 import { Section } from "../Components/Section";
 import { useArtifactForm } from "../hooks/useArtifactForm";
 import ArtifactDetails from "../Components/ArtifactDetails";
 import DocumentUploads from "../Components/DocumentUploads";
 import AudioUpload from "../Components/AudioUpload";
 import MediaGallery from "../Components/MediaGallery";
+import { UploadPreview } from "../Components/UploadPreview";
 
 function Cms() {
   const {
@@ -26,6 +28,9 @@ function Cms() {
     handleAudioUpload,
     handleMediaUpload,
     handleMediaDelete,
+    referenceLinks,
+    addReferenceLink,
+    deleteReferenceLink,
   } = useArtifactForm();
 
   return (
@@ -58,6 +63,55 @@ function Cms() {
           onAdd={addNewSection}
           error={errors.sections?.[activeSection]?.message}
         />
+      </div>
+
+      {/* Reference Links */}
+      <div>
+        <h3 className="uppercase text-left pb-5">
+          Reference Links
+        </h3>
+        <div className="flex flex-col gap-4">
+          <div className="flex flex-col gap-4">
+            <Input
+              label="Enter reference link"
+              placeholder="https://example.com"
+              {...register("referenceLinks")}
+              error={errors.referenceLinks?.message}
+              onKeyDown={(
+                e: React.KeyboardEvent<HTMLInputElement>,
+              ) => {
+                if (e.key === "Enter") {
+                  e.preventDefault();
+                  const input =
+                    e.target as HTMLInputElement;
+                  addReferenceLink(input.value);
+                  input.value = "";
+                }
+              }}
+            />
+            <div className="w-40">
+              <Button
+                type="button"
+                placeholder="Add Link"
+                onClick={() => {
+                  const input = document.querySelector(
+                    'input[name="referenceLinks"]',
+                  ) as HTMLInputElement;
+                  addReferenceLink(input.value);
+                  input.value = "";
+                }}
+              />
+            </div>
+          </div>
+          {referenceLinks.map((link, index) => (
+            <UploadPreview
+              key={index}
+              fileName={new URL(link).hostname}
+              fileURL={link}
+              onDelete={() => deleteReferenceLink(index)}
+            />
+          ))}
+        </div>
       </div>
 
       {/* PDF Documents */}
