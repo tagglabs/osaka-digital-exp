@@ -3,6 +3,7 @@ import { UploadPreview } from "./UploadPreview";
 
 interface AudioUploadProps {
   audioFile: File | null;
+  existingAudioUrl?: string;
   onFileUpload: (files: File[]) => void;
   onDelete?: () => void;
   error?: string;
@@ -10,6 +11,7 @@ interface AudioUploadProps {
 
 function AudioUpload({
   audioFile,
+  existingAudioUrl,
   onFileUpload,
   onDelete,
   error,
@@ -26,19 +28,19 @@ function AudioUpload({
           error={error}
         />
         
-        {audioFile && (
+        {(audioFile || existingAudioUrl) && (
           <div className="mt-4">
-            <div className="mb-3">
-              {/* <UploadPreview
-                fileName={audioFile.name}
-                fileSize={audioFile.size}
+            {/* <div className="mb-3">
+              <UploadPreview
+                fileName={audioFile ? audioFile.name : "Audio Guide"}
+                fileSize={audioFile ? audioFile.size : 0}
                 onDelete={onDelete}
-              /> */}
-            </div>
+              />
+            </div> */}
             <audio
               controls
               className="w-full"
-              src={URL.createObjectURL(audioFile)}
+              src={audioFile ? URL.createObjectURL(audioFile) : existingAudioUrl}
             >
               Your browser does not support the audio element.
             </audio>

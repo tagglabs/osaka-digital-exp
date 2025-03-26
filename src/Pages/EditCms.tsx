@@ -9,21 +9,21 @@ import { useArtifactForm } from "../hooks/useArtifactForm";
 import ArtifactDetails from "../Components/ArtifactDetails";
 import DocumentUploads from "../Components/DocumentUploads";
 import MediaGallery from "../Components/MediaGallery";
+import AudioUpload from "../Components/AudioUpload";
 import { FormData, SectionType, artifactSchema, FileType } from "../types/artifacts";
 import { FileDetails, MediaGallery as MediaGalleryType } from "../types/uploadManager";
 
 function EditCms() {
   const { id } = useParams<{ id: string }>();
   const [isLoading, setIsLoading] = useState(true);
-  const [sections, setSections] = useState<SectionType[]>([
-    { title: "Overview", content: "" },
-  ]);
   const [existingProfile, setExistingProfile] = useState<FileDetails | null>(null);
   const [existingPdfs, setExistingPdfs] = useState<FileDetails[]>([]);
+  const [existingAudio, setExistingAudio] = useState<FileDetails | null>(null);
   const [existingMedia, setExistingMedia] = useState<MediaGalleryType>({
     images: [],
     videos: [],
   });
+  const [activeSection, setActiveSection] = useState(0);
 
   // Form initialization with default values
   const form = useForm<FormData>({
@@ -35,14 +35,12 @@ function EditCms() {
       sections: [{ title: "Overview", content: "" }],
       pdfs: [],
       mediaGallery: [],
+      audioGuide: undefined
     }
   });
 
   const {
     isSubmitting,
-    activeSection,
-    addNewSection,
-    handleSectionChange,
     profilePreview: newProfilePreview,
     pdfs: newPdfs,
     mediaFiles: newMediaFiles,
@@ -51,7 +49,23 @@ function EditCms() {
     handlePdfDelete,
     handleMediaUpload,
     handleMediaDelete,
+    audioFile: newAudioFile,
+    handleAudioUpload,
   } = useArtifactForm();
+
+
+  const handleSectionChange = (index: number, title: string, content: string) => {
+    setActiveSection(index);
+    const updatedSections = [...form.getValues().sections];
+    updatedSections[index] = { title, content };
+    form.setValue('sections', updatedSections, { shouldValidate: true });
+  };
+
+  const addNewSection = () => {
+    const currentSections = form.getValues().sections;
+    form.setValue('sections', [...currentSections, { title: '', content: '' }], { shouldValidate: true });
+    setActiveSection(currentSections.length);
+  };
 
   // Convert file details to File objects for preview
   const convertToFiles = (pdfs: FileType[]) => {
@@ -80,9 +94,6 @@ function EditCms() {
           mediaGallery: artifact.mediaGallery || [],
           profilePicture: artifact.profilePicture
         });
-
-        // Initialize local state for sections
-        setSections(artifact.sections);
 
         // Set existing files with previews
         if (artifact.profilePicture) {
@@ -121,6 +132,14 @@ function EditCms() {
           setExistingMedia({ images, videos });
         }
 
+        // Set existing audio file
+        if (artifact.audioGuide) {
+          setExistingAudio({
+            ...artifact.audioGuide,
+            preview: artifact.audioGuide.fileURL
+          } as FileDetails);
+        }
+
       } catch (error) {
         console.error("Error fetching artifact:", error);
       } finally {
@@ -148,7 +167,8 @@ function EditCms() {
         ...formData,
         pdfs: [...existingPdfs, ...formData.pdfs || []],
         mediaGallery,
-        profilePicture: existingProfile || formData.profilePicture
+        profilePicture: existingProfile || formData.profilePicture,
+        audioGuide: existingAudio || formData.audioGuide
       };
 
       await axios.put(`/api/artifacts/${id}`, updateData);
@@ -180,8 +200,22 @@ function EditCms() {
       <ArtifactDetails
         register={form.register}
         errors={form.formState.errors}
-        onProfileUpload={handleProfilePicture}
-        profilePreview={existingProfile?.fileURL || newProfilePreview}
+        onProfileUpload={(files) => {
+          handleProfilePicture(files);
+          setExistingProfile(null); // Clear existing when new one is uploaded
+          const file = files[0];
+          if (file) {
+            form.setValue('profilePicture', {
+              originalName: file.name,
+              fileName: file.name,
+              fileSize: file.size,
+              extension: file.name.split('.').pop() || '',
+              mimeType: file.type,
+              fileURL: URL.createObjectURL(file)
+            });
+          }
+        }}
+        profilePreview={existingProfile?.fileURL || newProfilePreview || form.getValues().profilePicture?.fileURL || null}
       />
 
       {/* Sections */}
@@ -195,13 +229,22 @@ function EditCms() {
           </p>
         )}
         <Section
-          sections={sections}
+          sections={form.getValues().sections}
           activeSection={activeSection}
           onChange={handleSectionChange}
           onAdd={addNewSection}
           error={form.formState.errors.sections?.[activeSection]?.message}
         />
       </div>
+
+      {/* Audio Guide */}
+      <AudioUpload
+        audioFile={newAudioFile}
+        existingAudioUrl={existingAudio?.fileURL}
+        onFileUpload={handleAudioUpload}
+        onDelete={() => setExistingAudio(null)}
+        error={form.formState.errors.audioGuide?.message}
+      />
 
       {/* PDF Documents */}
       <DocumentUploads
