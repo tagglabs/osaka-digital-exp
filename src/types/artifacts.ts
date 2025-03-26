@@ -25,7 +25,10 @@ export const pdfSchema = z.array(fileSchema);
 
 // 📌 Main Artifact Schema
 export const artifactSchema = z.object({
-  zoneName: z.string().min(1, "Zone name is required"),
+  zoneName: z.enum(["zone1", "zone2", "zone3", "zone4", "zone5", "zone6", "zone7", "zone8", "zone9"], {
+    required_error: "Zone name is required",
+    invalid_type_error: "Please select a valid zone"
+  }),
   artifactName: z
     .string()
     .min(1, "Artifact name is required"),
