@@ -5,6 +5,8 @@ import {
 } from "react-hook-form";
 import { FormData } from "../types/artifacts";
 import { Input } from "../Components/Input";
+import { Select } from "../Components/Select";
+import { ZONES } from "../constants/zones";
 import { Dropzone } from "../Components/Dropzone";
 
 interface ArtifactDetailsProps {
@@ -27,11 +29,12 @@ const ArtifactDetails: React.FC<ArtifactDetailsProps> = ({
       </h2>
       <div className="w-full flex gap-10 h-[200px]">
         <div className="w-1/2 flex flex-col gap-2">
-          <Input
+          <Select
             label="Enter zone name *"
-            placeholder="Enter zone name"
+            placeholder="Select zone"
             {...register("zoneName")}
             error={errors.zoneName?.message}
+            options={[...ZONES]}
           />
           <Input
             label="Enter artifact name *"
