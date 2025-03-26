@@ -1,10 +1,12 @@
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import { useParams } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import axios from "axios";
 import { Button } from "../Components/Button";
+import { Input } from "../Components/Input";
 import { Section } from "../Components/Section";
+import { UploadPreview } from "../Components/UploadPreview";
 import { useUploadManager } from "../hooks/useUploadManager";
 import ArtifactDetails from "../Components/ArtifactDetails";
 import DocumentUploads from "../Components/DocumentUploads";
@@ -25,6 +27,24 @@ function EditCms() {
     videos: [],
   });
   const [activeSection, setActiveSection] = useState(0);
+  const linkInputRef = useRef<HTMLInputElement>(null);
+
+  const handleAddLink = (input: HTMLInputElement | null) => {
+    if (!input?.value) return;
+    
+    try {
+      const url = new URL(input.value); // Validate URL
+      const currentLinks = form.getValues().referenceLinks || [];
+      form.setValue('referenceLinks', [...currentLinks, input.value], { shouldValidate: true });
+      input.value = ''; // Clear input after successful add
+      form.clearErrors("referenceLinks");
+    } catch (e) {
+      form.setError("referenceLinks", {
+        type: "manual",
+        message: "Please enter a valid URL"
+      });
+    }
+  };
 
   // Form initialization with default values
   const form = useForm<FormData>({
@@ -36,9 +56,14 @@ function EditCms() {
       sections: [{ title: "Overview", content: "" }],
       pdfs: [],
       mediaGallery: [],
-      audioGuide: undefined
-    }
+      audioGuide: undefined,
+      referenceLinks: []
+    },
+    mode: 'onChange'  // Enable validation on change
   });
+
+  // Watch for referenceLinks changes to force re-render on updates
+  const referenceLinks = form.watch('referenceLinks');
 
   const uploadManager = useUploadManager();
   const uploadedFiles = uploadManager.getSelectedFiles();
@@ -120,8 +145,11 @@ function EditCms() {
           sections: artifact.sections,
           pdfs: artifact.pdfs || [],
           mediaGallery: artifact.mediaGallery || [],
-          profilePicture: artifact.profilePicture
+          profilePicture: artifact.profilePicture,
+          referenceLinks: artifact.referenceLinks || []
         });
+
+        // Reference links are handled by form state
 
         // Set existing files with previews
         if (artifact.profilePicture) {
@@ -217,7 +245,8 @@ function EditCms() {
         audioGuide: uploadResult.audioGuide ? {
           ...uploadResult.audioGuide,
           uploadDate: new Date().toISOString()
-        } : existingAudio
+        } : existingAudio,
+        referenceLinks: formData.referenceLinks
       };
 
       await axios.put(`/api/artifacts/${id}`, updateData);
@@ -292,6 +321,70 @@ function EditCms() {
           onAdd={addNewSection}
           error={form.formState.errors.sections?.[activeSection]?.message}
         />
+      </div>
+
+      {/* Reference Links */}
+      <div>
+        <h3 className="uppercase text-left pb-5">
+          Reference Links
+        </h3>
+        <div className="flex flex-col gap-4">
+          <div className="flex flex-col gap-4">
+            <div className="flex flex-col gap-4">
+              <div className="flex-1">
+                <Input
+                  label="Enter reference link"
+                  placeholder="https://example.com"
+                  defaultValue=""
+                  ref={linkInputRef}
+                  error={form.formState.errors.referenceLinks?.message}
+                  onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      handleAddLink(linkInputRef.current);
+                    }
+                  }}
+                />
+              </div>
+              <div className="w-40">
+                <Button
+                  type="button"
+                  placeholder="Add Link"
+                  onClick={() => {
+                    if (linkInputRef.current) {
+                      handleAddLink(linkInputRef.current);
+                    }
+                  }}
+                />
+              </div>
+            </div>
+            
+            {/* Reference Link Previews */}
+            {(form.watch('referenceLinks') || []).map((link: string, index: number) => {
+              try {
+                const url = new URL(link);
+                return (
+                  <UploadPreview
+                    key={index}
+                    fileName={url.hostname}
+                    fileURL={link}
+                    onDelete={() => {
+                      const currentLinks = form.getValues().referenceLinks || [];
+                      form.setValue(
+                        'referenceLinks',
+                        currentLinks.filter((_: string, i: number) => i !== index),
+                        { shouldValidate: true }
+                      );
+                      form.clearErrors("referenceLinks");
+                    }}
+                  />
+                );
+              } catch (e) {
+                return null;
+              }
+            })}
+          </div>
+        </div>
       </div>
 
       {/* Audio Guide */}

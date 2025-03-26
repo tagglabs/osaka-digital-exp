@@ -16,6 +16,7 @@ export const useArtifactForm = () => {
   const [sections, setSections] = useState<SectionType[]>([
     { title: "Overview", content: "" },
   ]);
+  const [referenceLinks, setReferenceLinks] = useState<string[]>([]);
 
   // Initialize upload manager and form
   const uploadManager = useUploadManager();
@@ -38,6 +39,7 @@ export const useArtifactForm = () => {
       pdfs: [],
       mediaGallery: [],
       audioGuide: undefined,
+      referenceLinks: [],
     },
   });
 
@@ -89,6 +91,26 @@ export const useArtifactForm = () => {
     if (pdfToDelete) {
       uploadManager.removeFile("pdf", pdfToDelete.name);
     }
+  };
+
+  // Reference Links handlers
+  const addReferenceLink = (url: string) => {
+    if (!url.trim()) return;
+    try {
+      new URL(url); // Validate URL
+      setReferenceLinks(prev => [...prev, url]);
+      setValue("referenceLinks", [...referenceLinks, url]);
+    } catch (e) {
+      setError("referenceLinks", {
+        type: "manual",
+        message: "Please enter a valid URL"
+      });
+    }
+  };
+
+  const deleteReferenceLink = (index: number) => {
+    setReferenceLinks(prev => prev.filter((_, i) => i !== index));
+    setValue("referenceLinks", referenceLinks.filter((_, i) => i !== index));
   };
 
   // Section handlers
@@ -229,6 +251,7 @@ export const useArtifactForm = () => {
               uploadDate: new Date().toISOString(),
             }
           : undefined,
+        referenceLinks: referenceLinks,
       };
 
       // Validate submission data
@@ -307,5 +330,10 @@ export const useArtifactForm = () => {
     handlePdfDelete,
     handleMediaUpload,
     handleMediaDelete,
+
+    // Reference Links management
+    referenceLinks,
+    addReferenceLink,
+    deleteReferenceLink,
   };
 };
