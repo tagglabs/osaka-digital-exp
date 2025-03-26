@@ -142,10 +142,6 @@ const artifactSchema = new mongoose.Schema<IArtifact>(
 );
 
 // Add any indexes if needed
-artifactSchema.index(
-  { zoneName: 1, artifactName: 1 },
-  { unique: true },
-);
 artifactSchema.index({ createdAt: -1 });
 
 // Export both interface and model
