@@ -15,7 +15,7 @@ interface Artifact {
   }>;
   pdfs?: FileType[];
   mediaGallery?: FileType[];
-  studyMaterials?: { title: string; url: string }[];
+  referenceLinks?: { title: string; url: string }[];
   audioGuide?: FileType;
 }
 
@@ -87,7 +87,7 @@ function ArtifactDetails() {
         description={artifact.description}
         mediaGallery={artifact.mediaGallery}
         pdfs={artifact.pdfs}
-        studyMaterials={artifact.studyMaterials}
+        referenceLinks={artifact.referenceLinks}
         audioGuide={artifact.audioGuide}
       />
 
@@ -139,7 +139,7 @@ function ArtifactDetails() {
             {artifact.sections.map((section, index) => (
               <button
                 key={index}
-                className={`px-5 py-3 text-sm border rounded-full w-fit text-nowrap ${
+                className={`px-5 py-3 text-sm border font-gilroy rounded-full w-fit text-nowrap ${
                   activeTab === index
                     ? "bg-black text-white"
                     : "bg-[#F0E9E9] text-black"

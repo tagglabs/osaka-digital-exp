@@ -9,7 +9,7 @@ interface ArtifactMediaModalProps {
   description: string;
   mediaGallery?: FileType[];
   pdfs?: FileType[];
-  studyMaterials?: { title: string; url: string }[];
+  referenceLinks?: { title: string; url: string }[];
   audioGuide?: FileType;
 }
 
@@ -20,7 +20,7 @@ export default function ArtifactMediaModal({
   description,
   mediaGallery = [],
   pdfs = [],
-  studyMaterials = [],
+  referenceLinks = [],
   audioGuide,
 }: ArtifactMediaModalProps) {
   const [visible, setVisible] = useState(false);
@@ -156,13 +156,13 @@ export default function ArtifactMediaModal({
         )}
 
         {/* Study Materials Section */}
-        {studyMaterials.length > 0 && (
+        {referenceLinks.length > 0 && (
           <section className="pb-4 pt-8 border-b border-gray-200">
             <h2 className="text-lg mb-4 font-gilroy">
               Study Material and Downloads
             </h2>
             <div className="space-y-3">
-              {studyMaterials.map((material, index) => (
+              {referenceLinks.map((material, index) => (
                 <a
                   key={index}
                   href={material.url}
