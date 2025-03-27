@@ -9,6 +9,30 @@ import {
 } from "../types/artifacts";
 import { useUploadManager } from "./useUploadManager";
 
+interface ArtifactResponse {
+  id: string;
+  artifactName: string;
+  description: string;
+  zoneName: string;
+  sections: SectionType[];
+  pdfs: any[];
+  mediaGallery: any[];
+  profilePicture?: {
+    originalName: string;
+    fileName: string;
+    fileSize: number;
+    extension: string;
+  };
+  referenceLinks: string[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+interface ArtifactInfo {
+  id: string;
+  artifactName: string;
+}
+
 export const useArtifactForm = () => {
   // Form state
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -19,6 +43,11 @@ export const useArtifactForm = () => {
   const [referenceLinks, setReferenceLinks] = useState<
     string[]
   >([]);
+
+  // QR Code Modal state
+  const [isQRModalOpen, setIsQRModalOpen] = useState(false);
+  const [artifactCreated, setArtifactCreated] = useState(false);
+  const [artifact, setArtifact] = useState<ArtifactInfo | null>(null);
 
   // Initialize upload manager and form
   const uploadManager = useUploadManager();
@@ -49,6 +78,30 @@ export const useArtifactForm = () => {
   useEffect(() => {
     setValue("sections", sections);
   }, [sections, setValue]);
+
+  // QR Code handlers
+  const handleDownloadQR = () => {
+    if (!artifact) return;
+    
+    const svg = document.getElementById("qr-code");
+    const svgData = new XMLSerializer().serializeToString(svg!);
+    const canvas = document.createElement("canvas");
+    const ctx = canvas.getContext("2d");
+    const img = new Image();
+    img.onload = () => {
+      canvas.width = img.width;
+      canvas.height = img.height;
+      ctx!.fillStyle = "white";
+      ctx!.fillRect(0, 0, canvas.width, canvas.height);
+      ctx!.drawImage(img, 0, 0);
+      const pngFile = canvas.toDataURL("image/png");
+      const downloadLink = document.createElement("a");
+      downloadLink.download = `${artifact.artifactName}.png`;
+      downloadLink.href = pngFile;
+      downloadLink.click();
+    };
+    img.src = "data:image/svg+xml;base64," + btoa(svgData);
+  };
 
   // File handlers
   const handleProfilePicture = (files: File[]) => {
@@ -283,9 +336,15 @@ export const useArtifactForm = () => {
       );
 
       // Submit to artifacts API
-      await axios.post("/api/artifacts", submissionData);
-
+      const response = await axios.post<ArtifactResponse>("/api/artifacts", submissionData);
       console.log("API submission successful");
+
+      // Store artifact info from response
+      setArtifact({
+        id: response.data.id,
+        artifactName: response.data.artifactName
+      });
+      setArtifactCreated(true);
 
       // Reset form state
       reset();
@@ -343,5 +402,12 @@ export const useArtifactForm = () => {
     referenceLinks,
     addReferenceLink,
     deleteReferenceLink,
+
+    // QR Code management
+    isQRModalOpen,
+    setIsQRModalOpen,
+    handleDownloadQR,
+    artifactCreated,
+    artifact,
   };
 };
