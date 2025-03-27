@@ -50,7 +50,7 @@ function EditCms() {
   const form = useForm<FormData>({
     resolver: zodResolver(artifactSchema),
     defaultValues: {
-      zoneName: "zone1",
+      zoneName: undefined,
       artifactName: "",
       description: "",
       sections: [{ title: "Overview", content: "" }],
@@ -280,7 +280,7 @@ function EditCms() {
   return (
     <form
       onSubmit={form.handleSubmit(handleFormSubmit)}
-      className="flex flex-col h-screen w-screen p-10 gap-10"
+      className="flex flex-col h-screen w-screen p-10 gap-10 px-20"
     >
       {/* Artifact Details Section */}
       <ArtifactDetails

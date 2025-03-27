@@ -36,7 +36,7 @@ function Cms() {
   return (
     <form
       onSubmit={handleSubmit}
-      className="flex flex-col h-screen w-screen p-10 gap-10"
+      className="flex flex-col h-screen w-screen p-10 gap-10 px-20"
     >
       {/* Artifact Details Section */}
       <ArtifactDetails
