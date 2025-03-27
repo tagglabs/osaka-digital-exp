@@ -6,7 +6,7 @@ import {
 import { FormData } from "../types/artifacts";
 import { Input } from "../Components/Input";
 import { Select } from "../Components/Select";
-import { ZONES } from "../constants/zones";
+import { artifactSchema } from "../types/artifacts";
 import { Dropzone } from "../Components/Dropzone";
 
 interface ArtifactDetailsProps {
@@ -28,13 +28,13 @@ const ArtifactDetails: React.FC<ArtifactDetailsProps> = ({
         Artifact Details
       </h2>
       <div className="w-full flex gap-10 h-[200px]">
-        <div className="w-1/2 flex flex-col gap-2">
+        <div className="w-1/2 flex flex-col gap-5">
           <Select
             label="Enter zone name *"
             placeholder="Select zone"
             {...register("zoneName")}
             error={errors.zoneName?.message}
-            options={[...ZONES]}
+            options={["zone1", "zone2", "zone3", "zone4", "zone5", "zone6", "zone7", "zone8", "zone9"]}
           />
           <Input
             label="Enter artifact name *"
@@ -53,20 +53,18 @@ const ArtifactDetails: React.FC<ArtifactDetailsProps> = ({
           <p className="text-[12px] pb-2 text-gray-primary uppercase">
             Upload Profile Picture
           </p>
-          <div className="flex gap-4">
-            <div className="w-1/2">
-              <Dropzone
-                id="profile"
-                onDrop={onProfileUpload}
-                accept="image/*"
-              />
-            </div>
+          <div className="relative w-full h-[200px]">
+            <Dropzone
+              id="profile"
+              onDrop={onProfileUpload}
+              accept="image/*"
+            />
             {profilePreview && (
-              <div className="w-1/2 h-[150px]">
+              <div className="absolute right-10 top-8 w-[100px] h-[100px]">
                 <img
                   src={profilePreview}
                   alt="Profile Preview"
-                  className="w-full h-full object-cover rounded-lg"
+                  className="w-full h-full object-cover rounded-lg border-2 border-gray-300"
                 />
               </div>
             )}

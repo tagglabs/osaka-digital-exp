@@ -34,7 +34,7 @@ export const useArtifactForm = () => {
   } = useForm<FormData>({
     resolver: zodResolver(artifactSchema),
     defaultValues: {
-      zoneName: "zone1",
+      zoneName: undefined,
       artifactName: "",
       description: "",
       sections: [{ title: "Overview", content: "" }],

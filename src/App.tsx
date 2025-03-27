@@ -3,7 +3,6 @@ import {
   Route,
   Routes,
 } from "react-router-dom";
-import Home from "./Pages/Home";
 import Cms from "./Pages/Cms";
 import ArtifactDetails from "./Pages/ArtifactDetails";
 import { Dashboard } from "./Pages/Dashboard";
@@ -16,7 +15,14 @@ function App() {
     <AuthProvider>
       <BrowserRouter>
         <Routes>
-          <Route path="/" element={<Home />} />
+          <Route
+            path="*"
+            element={
+              <ProtectedRoute>
+                <Cms />
+              </ProtectedRoute>
+            }
+          />
           <Route
             path="/cms"
             element={
@@ -45,6 +51,7 @@ function App() {
               </ProtectedRoute>
             }
           />
+
         </Routes>
       </BrowserRouter>
     </AuthProvider>
