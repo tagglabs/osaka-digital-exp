@@ -50,7 +50,7 @@ function EditCms() {
   const form = useForm<FormData>({
     resolver: zodResolver(artifactSchema),
     defaultValues: {
-      zoneName: "",
+      zoneName: "zone1",
       artifactName: "",
       description: "",
       sections: [{ title: "Overview", content: "" }],

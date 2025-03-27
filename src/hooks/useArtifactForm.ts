@@ -34,7 +34,7 @@ export const useArtifactForm = () => {
   } = useForm<FormData>({
     resolver: zodResolver(artifactSchema),
     defaultValues: {
-      zoneName: "",
+      zoneName: "zone1",
       artifactName: "",
       description: "",
       sections: [{ title: "Overview", content: "" }],
@@ -222,7 +222,7 @@ export const useArtifactForm = () => {
 
       // Prepare submission data
       const submissionData: FormData = {
-        zoneName: data.zoneName.trim(),
+        zoneName: data.zoneName,
         artifactName: data.artifactName.trim(),
         description: data.description.trim(),
         sections: sections.map((section) => ({
