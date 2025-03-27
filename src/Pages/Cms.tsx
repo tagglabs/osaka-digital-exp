@@ -7,6 +7,8 @@ import DocumentUploads from "../Components/DocumentUploads";
 import AudioUpload from "../Components/AudioUpload";
 import MediaGallery from "../Components/MediaGallery";
 import { UploadPreview } from "../Components/UploadPreview";
+import Modal from "../Components/Modal";
+import QRCode from "react-qr-code";
 
 function Cms() {
   const {
@@ -31,6 +33,12 @@ function Cms() {
     referenceLinks,
     addReferenceLink,
     deleteReferenceLink,
+    // QR Code related props
+    isQRModalOpen,
+    setIsQRModalOpen,
+    handleDownloadQR,
+    artifactCreated,
+    artifact,
   } = useArtifactForm();
 
   return (
@@ -160,7 +168,38 @@ function Cms() {
           type="submit"
           disabled={isSubmitting}
         />
+
+        {/* Download QR button - only show when artifact is created */}
+        {artifactCreated && artifact && (
+          <Button
+            placeholder="Download QR"
+            type="button"
+            onClick={() => setIsQRModalOpen(true)}
+          />
+        )}
       </div>
+
+      {/* QR Code Modal */}
+      <Modal
+        isOpen={isQRModalOpen}
+        onClose={() => setIsQRModalOpen(false)}
+        title="Artifact QR Code"
+      >
+        <div className="flex flex-col items-center gap-6">
+          {artifact && (
+            <QRCode
+              id="qr-code"
+              value={`http://localhost:5173/artifact/${artifact.id}`}
+              size={256}
+            />
+          )}
+          <Button
+            placeholder="Save to device"
+            type="button"
+            onClick={handleDownloadQR}
+          />
+        </div>
+      </Modal>
     </form>
   );
 }
