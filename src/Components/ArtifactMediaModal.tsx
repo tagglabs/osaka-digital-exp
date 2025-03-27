@@ -9,7 +9,7 @@ interface ArtifactMediaModalProps {
   description: string;
   mediaGallery?: FileType[];
   pdfs?: FileType[];
-  referenceLinks?: { title: string; url: string }[];
+  studyMaterials?: { title: string; url: string }[];
   audioGuide?: FileType;
 }
 
@@ -20,7 +20,7 @@ export default function ArtifactMediaModal({
   description,
   mediaGallery = [],
   pdfs = [],
-  referenceLinks = [],
+  studyMaterials = [],
   audioGuide,
 }: ArtifactMediaModalProps) {
   const [visible, setVisible] = useState(false);
@@ -141,12 +141,13 @@ export default function ArtifactMediaModal({
             </h2>
             <div className="bg-gray-50 rounded-lg p-4 space-y-2">
               <div className="font-medium text-gray-900">
-                {audioGuide.originalName || "Audio Guide"}
+                {audioGuide.originalName.split(".")[0] ||
+                  "Audio Guide"}
               </div>
-              <audio controls className="w-full">
+              <audio controls>
                 <source
                   src={audioGuide.fileURL}
-                  type={audioGuide.mimeType}
+                  type="audio/mpeg"
                 />
                 Your browser does not support the audio
                 element.
@@ -156,13 +157,13 @@ export default function ArtifactMediaModal({
         )}
 
         {/* Study Materials Section */}
-        {referenceLinks.length > 0 && (
+        {studyMaterials.length > 0 && (
           <section className="pb-4 pt-8 border-b border-gray-200">
             <h2 className="text-lg mb-4 font-gilroy">
               Study Material and Downloads
             </h2>
             <div className="space-y-3">
-              {referenceLinks.map((material, index) => (
+              {studyMaterials.map((material, index) => (
                 <a
                   key={index}
                   href={material.url}

@@ -9,7 +9,7 @@ import {
   s3Config,
   uploadConfig,
   errorMessages,
-} from "../config/index.js";
+} from "../config";
 import crypto from "crypto";
 import path from "path";
 

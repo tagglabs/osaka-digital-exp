@@ -52,18 +52,10 @@ const artifactSchema = new mongoose.Schema<IArtifact>(
     zoneName: {
       type: String,
       required: true,
-      minlength: [
-        3,
-        "Zone name must be at least 3 characters long",
-      ],
     },
     artifactName: {
       type: String,
       required: true,
-      minlength: [
-        3,
-        "Artifact name must be at least 3 characters long",
-      ],
     },
     description: {
       type: String,
@@ -71,17 +63,14 @@ const artifactSchema = new mongoose.Schema<IArtifact>(
     },
     profilePicture: {
       type: fileMetadataSchema,
-      required: [true, "Profile picture is required"],
     },
     sections: [
       {
         title: {
           type: String,
-          required: [true, "Section title is required"],
         },
         content: {
           type: String,
-          required: [true, "Section content is required"],
         },
         _id: false, // Disable auto _id for subdocuments
       },

@@ -1,44 +1,12 @@
 import { Request, Response } from "express";
-import { Artifact } from "../models/Artifact.js";
-import { S3Service } from "../services/s3Service.js";
+import { Artifact } from "../models/Artifact";
+import { S3Service } from "../services/s3Service";
 import { z } from "zod";
-import { errorMessages } from "../config/index.js";
+import { errorMessages } from "../config";
+import { artifactSchema } from "../../types/artifacts";
 
-// Validation schemas
-const fileSchema = z.object({
-  originalName: z.string(),
-  fileName: z.string(),
-  fileSize: z.number(),
-  extension: z.string(),
-  mimeType: z.string(),
-  fileURL: z.string(),
-  preview: z.string().optional(),
-  uploadDate: z.string().datetime(),
-});
-
-const sectionSchema = z.object({
-  title: z.string().min(1, "Section title is required"),
-  content: z.string().min(1, "Section content is required"),
-});
-
-const artifactSchema = z.object({
-  zoneName: z
-    .string()
-    .min(3, "Zone name must be at least 3 characters"),
-  artifactName: z
-    .string()
-    .min(3, "Artifact name must be at least 3 characters"),
-  description: z.string().optional(),
-  profilePicture: fileSchema,
-  sections: z
-    .array(sectionSchema)
-    .min(1, "At least one section is required"),
-  pdfs: z.array(fileSchema).optional(),
-  audioGuide: fileSchema.optional(),
-  referenceLinks: z.array(z.string().url()).optional(),
-  mediaGallery: z.array(fileSchema).optional(),
-  externalURL: z.string().url().optional(),
-});
+// Validation schema
+const artifactValidationSchema = artifactSchema;
 
 // Custom error class
 class ApiError extends Error {
@@ -87,7 +55,9 @@ export const artifactController = {
   async createArtifact(req: Request, res: Response) {
     try {
       // Validate request body
-      const validatedData = artifactSchema.parse(req.body);
+      const validatedData = artifactValidationSchema.parse(
+        req.body,
+      );
 
       // Create new artifact
       const artifact = await Artifact.create({
@@ -166,14 +136,16 @@ export const artifactController = {
         throw new ApiError(404, errorMessages.NOT_FOUND);
       }
 
-      // Delete files from S3 including profile picture
+      // Delete files from S3 including profile picture if it exists
       const filesToDelete = [
         ...(artifact.pdfs?.map((file) => file.fileURL) ||
           []),
         ...(artifact.mediaGallery?.map(
           (file) => file.fileURL,
         ) || []),
-        artifact.profilePicture.fileURL,
+        ...(artifact.profilePicture?.fileURL
+          ? [artifact.profilePicture.fileURL]
+          : []),
       ];
 
       if (filesToDelete.length > 0) {
@@ -206,7 +178,9 @@ export const artifactController = {
   async editArtifact(req: Request, res: Response) {
     try {
       // Validate request body
-      const validatedData = artifactSchema.parse(req.body);
+      const validatedData = artifactValidationSchema.parse(
+        req.body,
+      );
 
       // Get original artifact
       const originalArtifact = await Artifact.findById(
@@ -220,13 +194,16 @@ export const artifactController = {
       const filesToDelete: string[] = [];
 
       // Check profile picture
-      if (
-        originalArtifact.profilePicture.fileURL !==
-        validatedData.profilePicture.fileURL
-      ) {
-        filesToDelete.push(
-          originalArtifact.profilePicture.fileURL,
-        );
+      if (originalArtifact.profilePicture?.fileURL) {
+        if (
+          !validatedData.profilePicture ||
+          originalArtifact.profilePicture.fileURL !==
+            validatedData.profilePicture.fileURL
+        ) {
+          filesToDelete.push(
+            originalArtifact.profilePicture.fileURL,
+          );
+        }
       }
 
       // Check PDFs

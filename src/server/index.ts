@@ -6,8 +6,8 @@ import {
   corsConfig,
   mongoConfig,
   errorMessages,
-} from "./config/index.js";
-import artifactRoutes from "./routes/artifact.routes.js";
+} from "./config";
+import artifactRoutes from "./routes/artifact.routes";
 
 const app = express();
 

@@ -1,8 +1,8 @@
 import { Router } from "express";
 import multer from "multer";
 import type { RequestHandler } from "express";
-import { artifactController } from "../controllers/artifactController.js";
-import { uploadConfig } from "../config/index.js";
+import { artifactController } from "../controllers/artifactController";
+import { uploadConfig } from "../config";
 
 const router = Router();
 
