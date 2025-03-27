@@ -155,6 +155,7 @@ export const Dashboard = () => {
           placeholder="New Artifact"
           type="button"
           onClick={() => navigate('/cms')}
+          showIcon
         />
       </div>
       <div className="grid gap-4">

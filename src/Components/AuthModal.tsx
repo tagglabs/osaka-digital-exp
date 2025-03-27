@@ -25,7 +25,7 @@ const AuthModal = ({ isOpen, onClose }: AuthModalProps) => {
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title="Authentication Required">
+    <Modal isOpen={isOpen} onClose={onClose} title="Enter your email address">
       <form onSubmit={handleSubmit} className="flex flex-col gap-6">
         <Input
           type="email"
@@ -39,7 +39,7 @@ const AuthModal = ({ isOpen, onClose }: AuthModalProps) => {
         <div className="flex justify-center">
           <Button
             type="submit"
-            placeholder="Authenticate"
+            placeholder="Login"
           />
         </div>
       </form>

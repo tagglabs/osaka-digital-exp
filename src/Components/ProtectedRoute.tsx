@@ -47,15 +47,15 @@ const ProtectedRoute = ({
           <div className=" flex flex-col justify-center items-center text-center p-8 rounded-lg max-w-md">
             <LockIcon />
             <h2 className="text-2xl font-semibold text-gray-800 mb-2">
-              Authentication Required
+              Access Denied
             </h2>
             <p className="text-gray-600 mb-6">
-              This is a protected area. Please authenticate
+              This is a protected area. Please login
               with your administrator email to access this
               page.
             </p>
             <Button
-              placeholder="Authenticate"
+              placeholder="Login"
               onClick={() => setShowModal(true)}
             />
           </div>
