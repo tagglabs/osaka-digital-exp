@@ -129,9 +129,8 @@ export const artifactController = {
   // Delete artifact
   async deleteArtifact(req: Request, res: Response) {
     try {
-      const artifact = await Artifact.findById(
-        req.params.id,
-      );
+      const id = req.params.id;
+      const artifact = await Artifact.findById(id);
       if (!artifact) {
         throw new ApiError(404, errorMessages.NOT_FOUND);
       }
@@ -159,7 +158,7 @@ export const artifactController = {
       // Delete artifact from database
       await Artifact.findByIdAndDelete(req.params.id);
 
-      res.status(204).send();
+      res.status(204).send(id);
     } catch (error) {
       if (error instanceof ApiError) {
         throw error;
