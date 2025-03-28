@@ -68,11 +68,12 @@ export const artifactSchema = z.object({
     .describe("At least one section required"),
   pdfs: pdfSchema, // Multiple PDFs
   audioGuide: fileSchema.optional(), // Single audio guide
-  referenceLinks: z
-    .array(
-      z.string().url({ message: "Enter a valid url!" }),
-    )
-    .optional(), // External reference links
+  referenceLink: z
+    .string()
+    .url({ message: "Enter a valid url !" })
+    .optional()
+    .or(z.literal("")), // External reference link
+  referenceLinks: z.array(z.string()),
   mediaGallery: mediaGallerySchema, // Multiple images/videos
   externalURL: z.string().url().optional(), // Optional external reference link
   createdAt: z.string().optional(), // Timestamp (ISO format)
