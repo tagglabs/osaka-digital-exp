@@ -16,7 +16,7 @@ interface FileMetadata {
 export interface IArtifact {
   zoneName: string;
   artifactName: string;
-  description?: string;
+  description: string;
   sections: Array<{
     title: string;
     content: string;
@@ -26,7 +26,7 @@ export interface IArtifact {
   audioGuide?: FileMetadata;
   referenceLinks?: string[];
   mediaGallery?: FileMetadata[];
-  externalURL?: string;
+  // externalURL?: string;
   createdAt: Date;
 }
 
@@ -59,7 +59,7 @@ const artifactSchema = new mongoose.Schema<IArtifact>(
     },
     description: {
       type: String,
-      required: false,
+      required: true,
     },
     profilePicture: {
       type: fileMetadataSchema,
@@ -86,32 +86,32 @@ const artifactSchema = new mongoose.Schema<IArtifact>(
     referenceLinks: {
       type: [String],
       required: false,
-      validate: {
-        validator: function (v: string[]) {
-          return v.every((link) =>
-            Boolean(link.match(/^https?:\/\/.+\..+$/)),
-          );
-        },
-        message: "Invalid URL format",
-      },
+      // validate: {
+      //   validator: function (v: string[]) {
+      //     return v.every((link) =>
+      //       Boolean(link.match(/^https?:\/\/.+\..+$/)),
+      //     );
+      //   },
+      //   message: "Invalid URL format",
+      // },
     },
     mediaGallery: {
       type: [fileMetadataSchema],
       required: false,
     },
-    externalURL: {
-      type: String,
-      required: false,
-      validate: {
-        validator: function (v: string) {
-          if (!v) return true; // Allow empty
-          return Boolean(
-            v.match(/^https?:\/\/.+\..+$/), // Basic URL validation
-          );
-        },
-        message: "Invalid URL format",
-      },
-    },
+    // externalURL: {
+    //   type: String,
+    //   required: false,
+    //   validate: {
+    //     validator: function (v: string) {
+    //       if (!v) return true; // Allow empty
+    //       return Boolean(
+    //         v.match(/^https?:\/\/.+\..+$/), // Basic URL validation
+    //       );
+    //     },
+    //     message: "Invalid URL format",
+    //   },
+    // },
     createdAt: {
       type: Date,
       default: Date.now,

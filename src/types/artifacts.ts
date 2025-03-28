@@ -8,13 +8,17 @@ export const fileSchema = z.object({
   extension: z.string(),
   mimeType: z.string(),
   fileURL: z.string(), // S3 or external URL
-  uploadDate: z.string().optional(), // ISO timestamp
+  uploadDate: z.string(), // ISO timestamp (required to match Mongoose schema)
 });
 
 // 📌 Section Schema (Title + Content)
 export const sectionSchema = z.object({
-  title: z.string().min(1, "Section title is required"),
-  content: z.string().min(1, "Section content is required"),
+  title: z
+    .string()
+    .nonempty({ message: "Section title is required" }),
+  content: z
+    .string()
+    .nonempty({ message: "Section content is required" }),
 });
 
 // 📌 Media Gallery Schema (Unified for images/videos)
@@ -25,21 +29,30 @@ export const pdfSchema = z.array(fileSchema);
 
 // 📌 Main Artifact Schema
 export const artifactSchema = z.object({
-  zoneName: z.enum(["zone1", "zone2", "zone3", "zone4", "zone5", "zone6", "zone7", "zone8", "zone9"], {
+  zoneName: z.string({
     required_error: "Zone name is required",
-    invalid_type_error: "Please select a valid zone"
-  }),
+    invalid_type_error: "Zone name is required",
+  }).refine(
+    (val) => ["zone1", "zone2", "zone3", "zone4", "zone5", "zone6", "zone7", "zone8", "zone9"].includes(val),
+    {
+      message: "Zone name is required"
+    }
+  ),
   artifactName: z
     .string()
-    .min(1, "Artifact name is required"),
-  description: z.string().min(1, "Description is required"),
+    .nonempty({ message: "Artifact name is required !" }),
+  description: z
+    .string()
+    .nonempty({ message: "Description is required !" }),
   profilePicture: fileSchema.optional(), // Single profile picture
-  sections: z
-    .array(sectionSchema)
-    .min(1, "At least one section is required"),
+  sections: z.tuple([sectionSchema]).rest(sectionSchema).describe("At least one section required"),
   pdfs: pdfSchema, // Multiple PDFs
   audioGuide: fileSchema.optional(), // Single audio guide
-  referenceLinks: z.array(z.string().url()).optional(), // External reference links
+  referenceLinks: z
+    .array(
+      z.string().url({ message: "Enter a valid url!" }),
+    )
+    .optional(), // External reference links
   mediaGallery: mediaGallerySchema, // Multiple images/videos
   externalURL: z.string().url().optional(), // Optional external reference link
   createdAt: z.string().optional(), // Timestamp (ISO format)
