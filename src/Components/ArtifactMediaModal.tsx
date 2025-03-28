@@ -9,7 +9,7 @@ interface ArtifactMediaModalProps {
   description: string;
   mediaGallery?: FileType[];
   pdfs?: FileType[];
-  referenceLinks?: { title: string; url: string }[];
+  referenceLinks?: string[];
   audioGuide?: FileType;
 }
 
@@ -163,35 +163,37 @@ export default function ArtifactMediaModal({
               Study Material and Downloads
             </h2>
             <div className="space-y-3">
-              {referenceLinks.map((material, index) => (
+              {referenceLinks.map((link, index) => (
                 <a
                   key={index}
-                  href={material.url}
+                  href={link}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="flex items-center p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
                 >
+                  <div className="bg-gray-200 rounded-md p-2 mr-3">
+                    <svg
+                      className="w-6 h-6 text-gray-500"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth="2"
+                        d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
+                      />
+                    </svg>
+                  </div>
                   <div>
                     <h3 className="font-medium text-gray-900">
-                      {material.title}
+                      {new URL(link).hostname}
                     </h3>
-                    <p className="text-sm text-gray-500">
-                      {material.url.split("/").slice(-1)[0]}
+                    <p className="text-sm text-blue-500 truncate max-w-xs">
+                      {link}
                     </p>
                   </div>
-                  <svg
-                    className="w-5 h-5 text-gray-400 ml-auto"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth="2"
-                      d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
-                    />
-                  </svg>
                 </a>
               ))}
             </div>

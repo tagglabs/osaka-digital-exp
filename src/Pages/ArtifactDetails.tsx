@@ -15,7 +15,7 @@ interface Artifact {
   }>;
   pdfs?: FileType[];
   mediaGallery?: FileType[];
-  referenceLinks?: { title: string; url: string }[];
+  referenceLinks?: string[];
   audioGuide?: FileType;
 }
 
