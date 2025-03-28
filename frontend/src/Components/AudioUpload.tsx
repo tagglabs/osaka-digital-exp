@@ -1,6 +1,4 @@
 import { Dropzone } from "./Dropzone";
-import { UploadPreview } from "./UploadPreview";
-
 interface AudioUploadProps {
   audioFile: File | null;
   existingAudioUrl?: string;
@@ -13,7 +11,6 @@ function AudioUpload({
   audioFile,
   existingAudioUrl,
   onFileUpload,
-  onDelete,
   error,
 }: AudioUploadProps) {
   return (
@@ -30,13 +27,6 @@ function AudioUpload({
         
         {(audioFile || existingAudioUrl) && (
           <div className="mt-4">
-            {/* <div className="mb-3">
-              <UploadPreview
-                fileName={audioFile ? audioFile.name : "Audio Guide"}
-                fileSize={audioFile ? audioFile.size : 0}
-                onDelete={onDelete}
-              />
-            </div> */}
             <audio
               controls
               className="w-full"

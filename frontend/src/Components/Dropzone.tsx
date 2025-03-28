@@ -6,7 +6,7 @@ interface DropzoneProps {
   accept?: string;
   multiple?: boolean;
   id: string; // Unique identifier for each dropzone
-  error: string | false;
+  error?: string | false;
 }
 
 export const Dropzone = ({
@@ -55,7 +55,7 @@ export const Dropzone = ({
       <label
         htmlFor={`dropzone-${id}`}
         className={`flex flex-col items-center justify-center w-full pt-2 border-2 border-dashed rounded-lg cursor-pointer
-          ${error ? "border-red-500" : "border-gray-300"}`}
+          ${error ? "border-red-500" : "border-gray-300 hover:border-gray-400"}`}
         onDrop={handleDrop}
         onDragOver={handleDragOver}
       >

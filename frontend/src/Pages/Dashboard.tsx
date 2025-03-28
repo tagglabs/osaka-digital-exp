@@ -87,7 +87,6 @@ export const Dashboard = () => {
   const navigate = useNavigate();
   const [artifacts, setArtifacts] = useState<APIArtifact[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [deleteItemId, setDeleteItemId] = useState<string | null>(null);
 
@@ -139,9 +138,7 @@ export const Dashboard = () => {
           throw new Error("Failed to fetch artifacts");
         }
       } catch (err) {
-        const errorMessage = err instanceof Error ? err.message : "Failed to fetch artifacts";
-        setError(errorMessage);
-        console.error("Error fetching artifacts:", err);
+        toast.error("Error fetching artifacts");
       } finally {
         setLoading(false);
       }
@@ -154,14 +151,6 @@ export const Dashboard = () => {
     return (
       <div className="flex justify-center items-center min-h-screen">
         <p>Loading artifacts...</p>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="flex justify-center items-center min-h-screen">
-        <p className="text-red-500">{error}</p>
       </div>
     );
   }
