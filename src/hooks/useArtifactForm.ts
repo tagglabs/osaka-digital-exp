@@ -47,8 +47,10 @@ export const useArtifactForm = () => {
 
   // QR Code Modal state
   const [isQRModalOpen, setIsQRModalOpen] = useState(false);
-  const [artifactCreated, setArtifactCreated] = useState(false);
-  const [artifact, setArtifact] = useState<ArtifactInfo | null>(null);
+  const [artifactCreated, setArtifactCreated] =
+    useState(false);
+  const [artifact, setArtifact] =
+    useState<ArtifactInfo | null>(null);
 
   // Initialize upload manager and form
   const uploadManager = useUploadManager();
@@ -78,16 +80,18 @@ export const useArtifactForm = () => {
     // Ensure sections array always has at least one element in the correct tuple format
     setValue("sections", [
       sections[0] || { title: "Overview", content: "" },
-      ...sections.slice(1)
+      ...sections.slice(1),
     ]);
   }, [sections, setValue]);
 
   // QR Code handlers
   const handleDownloadQR = () => {
     if (!artifact) return;
-    
+
     const svg = document.getElementById("qr-code");
-    const svgData = new XMLSerializer().serializeToString(svg!);
+    const svgData = new XMLSerializer().serializeToString(
+      svg!,
+    );
     const canvas = document.createElement("canvas");
     const ctx = canvas.getContext("2d");
     const img = new Image();
@@ -190,15 +194,22 @@ export const useArtifactForm = () => {
     // Ensure it matches the tuple schema [first, ...rest]
     setValue("sections", [
       sections[0] || { title: "Overview", content: "" },
-      ...sections.slice(1)
+      ...sections.slice(1),
     ]);
   };
 
   // Form submission handler
   const onSubmit = async (data: FormData) => {
+    console.log("Submitting form data:", data);
     setIsSubmitting(true);
 
     try {
+      // Check if profile picture is uploaded
+      if (!uploadedFiles.profilePicture) {
+        toast.error("Profile picture is required");
+        setIsSubmitting(false);
+        return;
+      }
       console.log("Proceeding with file upload...");
 
       // Upload all files and get their details
@@ -256,21 +267,31 @@ export const useArtifactForm = () => {
       };
 
       // Validate submission data
-      const finalValidation = artifactSchema.safeParse(submissionData);
+      const finalValidation =
+        artifactSchema.safeParse(submissionData);
       if (!finalValidation.success) {
-        console.error("Final validation failed:", finalValidation.error);
-        toast.error(finalValidation.error.errors[0]?.message || "Invalid form data structure");
+        console.error(
+          "Final validation failed:",
+          finalValidation.error,
+        );
+        toast.error(
+          finalValidation.error.errors[0]?.message ||
+            "Invalid form data structure",
+        );
         setIsSubmitting(false);
         return;
       }
 
       // Submit to artifacts API
-      const response = await axios.post<ArtifactResponse>("/api/artifacts", submissionData);
+      const response = await axios.post<ArtifactResponse>(
+        "/api/artifacts",
+        submissionData,
+      );
 
       // Store artifact info from response
       setArtifact({
         id: response.data.id,
-        artifactName: response.data.artifactName
+        artifactName: response.data.artifactName,
       });
       setArtifactCreated(true);
 
@@ -286,7 +307,7 @@ export const useArtifactForm = () => {
       toast.error(
         axios.isAxiosError(error)
           ? error.response?.data?.message || error.message
-          : "Failed to create artifact"
+          : "Failed to create artifact",
       );
     } finally {
       setIsSubmitting(false);

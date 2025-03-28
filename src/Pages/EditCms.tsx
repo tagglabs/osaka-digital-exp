@@ -305,7 +305,7 @@ function EditCms() {
       />
 
       {/* Sections */}
-      <div>
+      <div className="pt-12">
         <h3 className="uppercase text-left pb-5">
           Section Subheadings
         </h3>
