@@ -11,14 +11,16 @@ export const fileSchema = z.object({
   uploadDate: z.string(), // ISO timestamp (required to match Mongoose schema)
 });
 
-// 📌 Section Schema (Title + Content)
+// 📌 Section Schema (Title + Content with Japanese support)
 export const sectionSchema = z.object({
   title: z
     .string()
     .nonempty({ message: "Section title is required" }),
+  titleJap: z.string().optional(),
   content: z
     .string()
     .nonempty({ message: "Section content is required" }),
+  contentJap: z.string().optional(),
 });
 
 // 📌 Media Gallery Schema (Unified for images/videos)
@@ -54,9 +56,11 @@ export const artifactSchema = z.object({
   artifactName: z
     .string()
     .nonempty({ message: "Artifact name is required !" }),
+  artifactNameJap: z.string().optional(),
   description: z
     .string()
     .nonempty({ message: "Description is required !" }),
+  descriptionJap: z.string().optional(),
   profilePicture: fileSchema.optional(), // Single profile picture
   sections: z
     .tuple([sectionSchema])
