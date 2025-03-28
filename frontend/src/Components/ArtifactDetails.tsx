@@ -4,9 +4,9 @@ import {
   FieldErrors,
 } from "react-hook-form";
 import { FormData } from "../types/artifacts";
-import { Input } from "../Components/Input";
-import { Select } from "../Components/Select";
-import { Dropzone } from "../Components/Dropzone";
+import { Input } from "./Input";
+import { Select } from "./Select";
+import { Dropzone } from "./Dropzone";
 
 interface ArtifactDetailsProps {
   register: UseFormRegister<FormData>;

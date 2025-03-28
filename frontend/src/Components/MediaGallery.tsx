@@ -1,8 +1,11 @@
 import React, { useState } from "react";
-import { SelectFileType } from "../Components/SelectFileType";
-import { Dropzone } from "../Components/Dropzone";
-import { UploadPreview } from "../Components/UploadPreview";
-import { FileDetails, MediaGallery as MediaGalleryType } from "../types/uploadManager";
+import { SelectFileType } from "./SelectFileType";
+import { Dropzone } from "./Dropzone";
+import { UploadPreview } from "./UploadPreview";
+import {
+  FileDetails,
+  MediaGallery as MediaGalleryType,
+} from "../types/uploadManager";
 
 interface MediaState {
   images: File[];
@@ -33,30 +36,32 @@ const MediaGallery: React.FC<MediaGalleryProps> = ({
     "image" | "video"
   >("image");
 
-  const currentMedia = activeMediaType === "image"
-    ? [...existingFiles.images, ...mediaFiles.images]
-    : [...existingFiles.videos, ...mediaFiles.videos];
-  
-  const handleUpload = activeMediaType === "image"
-    ? onImageUpload
-    : onVideoUpload;
+  const currentMedia =
+    activeMediaType === "image"
+      ? [...existingFiles.images, ...mediaFiles.images]
+      : [...existingFiles.videos, ...mediaFiles.videos];
+
+  const handleUpload =
+    activeMediaType === "image"
+      ? onImageUpload
+      : onVideoUpload;
 
   const getFilePreview = (file: File | FileDetails) => {
-    if ('fileURL' in file) {
+    if ("fileURL" in file) {
       return file.fileURL;
     }
     return URL.createObjectURL(file);
   };
 
   const getFileName = (file: File | FileDetails) => {
-    if ('originalName' in file) {
+    if ("originalName" in file) {
       return file.originalName;
     }
     return file.name;
   };
 
   const getFileSize = (file: File | FileDetails) => {
-    if ('fileSize' in file) {
+    if ("fileSize" in file) {
       return file.fileSize;
     }
     return file.size;

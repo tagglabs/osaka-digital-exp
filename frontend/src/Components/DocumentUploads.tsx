@@ -1,6 +1,6 @@
 import React from "react";
-import { Dropzone } from "../Components/Dropzone";
-import { UploadPreview } from "../Components/UploadPreview";
+import { Dropzone } from "./Dropzone";
+import { UploadPreview } from "./UploadPreview";
 interface DocumentUploadsProps {
   pdfs: File[];
   onFileUpload: (files: File[]) => void;

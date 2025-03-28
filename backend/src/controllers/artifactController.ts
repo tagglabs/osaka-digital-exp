@@ -3,14 +3,17 @@ import { Artifact } from "../models/Artifact";
 import { S3Service } from "../services/s3Service";
 import { z } from "zod";
 import { errorMessages } from "../config";
-import { artifactSchema } from "../../types/artifacts";
+import { artifactSchema } from "../types/artifact";
 
 // Validation schema
 const artifactValidationSchema = artifactSchema;
 
 // Custom error class
 class ApiError extends Error {
-  constructor(public status: number, message: string) {
+  constructor(
+    public status: number,
+    message: string
+  ) {
     super(message);
     this.name = "ApiError";
   }
@@ -24,18 +27,12 @@ export const artifactController = {
         throw new ApiError(400, "No file provided");
       }
 
-      const type = req.body.type as
-        | "image"
-        | "video"
-        | "pdf";
+      const type = req.body.type as "image" | "video" | "pdf";
       if (!type) {
         throw new ApiError(400, "File type not specified");
       }
 
-      const result = await S3Service.uploadFile(
-        req.file,
-        type,
-      );
+      const result = await S3Service.uploadFile(req.file, type);
       res.json(result);
     } catch (error) {
       if (error instanceof ApiError) {
@@ -44,9 +41,7 @@ export const artifactController = {
       console.error("Upload error:", error);
       throw new ApiError(
         500,
-        error instanceof Error
-          ? error.message
-          : errorMessages.UPLOAD_FAILED,
+        error instanceof Error ? error.message : errorMessages.UPLOAD_FAILED
       );
     }
   },
@@ -55,9 +50,7 @@ export const artifactController = {
   async createArtifact(req: Request, res: Response) {
     try {
       // Validate request body
-      const validatedData = artifactValidationSchema.parse(
-        req.body,
-      );
+      const validatedData = artifactValidationSchema.parse(req.body);
 
       // Create new artifact
       const artifact = await Artifact.create({
@@ -68,18 +61,13 @@ export const artifactController = {
       res.status(201).json(artifact);
     } catch (error) {
       if (error instanceof z.ZodError) {
-        throw new ApiError(
-          400,
-          JSON.stringify(error.errors),
-        );
+        throw new ApiError(400, JSON.stringify(error.errors));
       }
 
       console.error("Create artifact error:", error);
       throw new ApiError(
         500,
-        error instanceof Error
-          ? error.message
-          : errorMessages.DATABASE_ERROR,
+        error instanceof Error ? error.message : errorMessages.DATABASE_ERROR
       );
     }
   },
@@ -87,9 +75,7 @@ export const artifactController = {
   // Get artifact by ID
   async getArtifact(req: Request, res: Response) {
     try {
-      const artifact = await Artifact.findById(
-        req.params.id,
-      );
+      const artifact = await Artifact.findById(req.params.id);
       if (!artifact) {
         throw new ApiError(404, errorMessages.NOT_FOUND);
       }
@@ -101,9 +87,7 @@ export const artifactController = {
       console.error("Get artifact error:", error);
       throw new ApiError(
         500,
-        error instanceof Error
-          ? error.message
-          : errorMessages.DATABASE_ERROR,
+        error instanceof Error ? error.message : errorMessages.DATABASE_ERROR
       );
     }
   },
@@ -119,9 +103,7 @@ export const artifactController = {
       console.error("Get all artifacts error:", error);
       throw new ApiError(
         500,
-        error instanceof Error
-          ? error.message
-          : errorMessages.DATABASE_ERROR,
+        error instanceof Error ? error.message : errorMessages.DATABASE_ERROR
       );
     }
   },
@@ -137,11 +119,8 @@ export const artifactController = {
 
       // Delete files from S3 including profile picture if it exists
       const filesToDelete = [
-        ...(artifact.pdfs?.map((file) => file.fileURL) ||
-          []),
-        ...(artifact.mediaGallery?.map(
-          (file) => file.fileURL,
-        ) || []),
+        ...(artifact.pdfs?.map((file) => file.fileURL) || []),
+        ...(artifact.mediaGallery?.map((file) => file.fileURL) || []),
         ...(artifact.profilePicture?.fileURL
           ? [artifact.profilePicture.fileURL]
           : []),
@@ -149,9 +128,7 @@ export const artifactController = {
 
       if (filesToDelete.length > 0) {
         await Promise.all(
-          filesToDelete.map((fileUrl) =>
-            S3Service.deleteFile(fileUrl),
-          ),
+          filesToDelete.map((fileUrl) => S3Service.deleteFile(fileUrl))
         );
       }
 
@@ -166,9 +143,7 @@ export const artifactController = {
       console.error("Delete artifact error:", error);
       throw new ApiError(
         500,
-        error instanceof Error
-          ? error.message
-          : errorMessages.DATABASE_ERROR,
+        error instanceof Error ? error.message : errorMessages.DATABASE_ERROR
       );
     }
   },
@@ -177,14 +152,10 @@ export const artifactController = {
   async editArtifact(req: Request, res: Response) {
     try {
       // Validate request body
-      const validatedData = artifactValidationSchema.parse(
-        req.body,
-      );
+      const validatedData = artifactValidationSchema.parse(req.body);
 
       // Get original artifact
-      const originalArtifact = await Artifact.findById(
-        req.params.id,
-      );
+      const originalArtifact = await Artifact.findById(req.params.id);
       if (!originalArtifact) {
         throw new ApiError(404, errorMessages.NOT_FOUND);
       }
@@ -199,18 +170,13 @@ export const artifactController = {
           originalArtifact.profilePicture.fileURL !==
             validatedData.profilePicture.fileURL
         ) {
-          filesToDelete.push(
-            originalArtifact.profilePicture.fileURL,
-          );
+          filesToDelete.push(originalArtifact.profilePicture.fileURL);
         }
       }
 
       // Check PDFs
-      const oldPdfUrls =
-        originalArtifact.pdfs?.map((pdf) => pdf.fileURL) ||
-        [];
-      const newPdfUrls =
-        validatedData.pdfs?.map((pdf) => pdf.fileURL) || [];
+      const oldPdfUrls = originalArtifact.pdfs?.map((pdf) => pdf.fileURL) || [];
+      const newPdfUrls = validatedData.pdfs?.map((pdf) => pdf.fileURL) || [];
       oldPdfUrls.forEach((url) => {
         if (!newPdfUrls.includes(url)) {
           filesToDelete.push(url);
@@ -219,13 +185,9 @@ export const artifactController = {
 
       // Check media gallery
       const oldMediaUrls =
-        originalArtifact.mediaGallery?.map(
-          (media) => media.fileURL,
-        ) || [];
+        originalArtifact.mediaGallery?.map((media) => media.fileURL) || [];
       const newMediaUrls =
-        validatedData.mediaGallery?.map(
-          (media) => media.fileURL,
-        ) || [];
+        validatedData.mediaGallery?.map((media) => media.fileURL) || [];
       oldMediaUrls.forEach((url) => {
         if (!newMediaUrls.includes(url)) {
           filesToDelete.push(url);
@@ -239,38 +201,30 @@ export const artifactController = {
           originalArtifact.audioGuide.fileURL !==
             validatedData.audioGuide.fileURL)
       ) {
-        filesToDelete.push(
-          originalArtifact.audioGuide.fileURL,
-        );
+        filesToDelete.push(originalArtifact.audioGuide.fileURL);
       }
 
       // Delete removed files from S3
       if (filesToDelete.length > 0) {
         await Promise.all(
-          filesToDelete.map((fileUrl) =>
-            S3Service.deleteFile(fileUrl),
-          ),
+          filesToDelete.map((fileUrl) => S3Service.deleteFile(fileUrl))
         );
       }
 
       // Update artifact in database
-      const updatedArtifact =
-        await Artifact.findByIdAndUpdate(
-          req.params.id,
-          {
-            ...validatedData,
-            updatedAt: new Date(),
-          },
-          { new: true },
-        );
+      const updatedArtifact = await Artifact.findByIdAndUpdate(
+        req.params.id,
+        {
+          ...validatedData,
+          updatedAt: new Date(),
+        },
+        { new: true }
+      );
 
       res.json(updatedArtifact);
     } catch (error) {
       if (error instanceof z.ZodError) {
-        throw new ApiError(
-          400,
-          JSON.stringify(error.errors),
-        );
+        throw new ApiError(400, JSON.stringify(error.errors));
       }
       if (error instanceof ApiError) {
         throw error;
@@ -278,9 +232,7 @@ export const artifactController = {
       console.error("Edit artifact error:", error);
       throw new ApiError(
         500,
-        error instanceof Error
-          ? error.message
-          : errorMessages.DATABASE_ERROR,
+        error instanceof Error ? error.message : errorMessages.DATABASE_ERROR
       );
     }
   },
