@@ -1,7 +1,6 @@
 import { Button } from "../Components/Button";
 import { Input } from "../Components/Input";
 import { Section } from "../Components/Section";
-import { ExclamationCircleIcon } from "@heroicons/react/24/solid";
 import { useArtifactForm } from "../hooks/useArtifactForm";
 import ArtifactDetails from "../Components/ArtifactDetails";
 import DocumentUploads from "../Components/DocumentUploads";
@@ -34,7 +33,6 @@ function Cms() {
     referenceLinks,
     addReferenceLink,
     deleteReferenceLink,
-    // QR Code related props
     isQRModalOpen,
     setIsQRModalOpen,
     handleDownloadQR,
@@ -45,7 +43,7 @@ function Cms() {
   return (
     <form
       onSubmit={handleSubmit}
-      className="flex flex-col h-screen w-screen p-10 gap-10 px-20"
+      className="flex flex-col h-screen w-screen p-10 gap-10 px-20 overflow-x-hidden"
     >
       {/* Artifact Details Section */}
       <ArtifactDetails
@@ -125,7 +123,6 @@ function Cms() {
       <AudioUpload
         audioFile={audioFile}
         onFileUpload={handleAudioUpload}
-        // onDelete={() => handleAudioUpload()}
         error={errors.audioGuide?.message}
       />
 
