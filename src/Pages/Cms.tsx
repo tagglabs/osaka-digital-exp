@@ -81,30 +81,22 @@ function Cms() {
             <Input
               label="Enter reference link"
               placeholder="https://example.com"
-              {...register("referenceLinks")}
-              error={errors.referenceLinks?.message}
-              onKeyDown={(
-                e: React.KeyboardEvent<HTMLInputElement>,
-              ) => {
-                if (e.key === "Enter") {
-                  e.preventDefault();
-                  const input =
-                    e.target as HTMLInputElement;
-                  addReferenceLink(input.value);
-                  input.value = "";
-                }
-              }}
+              {...register("referenceLink")}
+              error={errors.referenceLink?.message}
             />
             <div className="w-40">
               <Button
                 type="button"
                 placeholder="Add Link"
                 onClick={() => {
-                  const input = document.querySelector(
-                    'input[name="referenceLinks"]',
-                  ) as HTMLInputElement;
-                  addReferenceLink(input.value);
-                  input.value = "";
+                  const value = (
+                    document.querySelector(
+                      'input[name="referenceLink"]',
+                    ) as HTMLInputElement
+                  ).value;
+                  if (value) {
+                    addReferenceLink(value);
+                  }
                 }}
               />
             </div>

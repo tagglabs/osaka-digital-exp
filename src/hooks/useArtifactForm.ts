@@ -45,6 +45,31 @@ export const useArtifactForm = () => {
     string[]
   >([]);
 
+  // Reference link handlers
+  const addReferenceLink = (url: string) => {
+    try {
+      // Validate URL using the schema
+      const result =
+        artifactSchema.shape.referenceLink.safeParse(url);
+      if (!result.success) {
+        toast.error("Please enter a valid URL");
+        return;
+      }
+      setReferenceLinks([...referenceLinks, url]);
+      setValue("referenceLinks", [...referenceLinks, url]);
+    } catch (error) {
+      toast.error("Failed to add reference link");
+    }
+  };
+
+  const deleteReferenceLink = (index: number) => {
+    const newLinks = referenceLinks.filter(
+      (_, i) => i !== index,
+    );
+    setReferenceLinks(newLinks);
+    setValue("referenceLinks", newLinks);
+  };
+
   // QR Code Modal state
   const [isQRModalOpen, setIsQRModalOpen] = useState(false);
   const [artifactCreated, setArtifactCreated] =
@@ -72,6 +97,7 @@ export const useArtifactForm = () => {
       mediaGallery: [],
       audioGuide: undefined,
       referenceLinks: [],
+      referenceLink: "",
     },
   });
 
@@ -153,23 +179,6 @@ export const useArtifactForm = () => {
     if (pdfToDelete) {
       uploadManager.removeFile("pdf", pdfToDelete.name);
     }
-  };
-
-  // Reference Links handlers
-  const addReferenceLink = (url: string) => {
-    if (!url.trim()) return;
-    setReferenceLinks((prev) => [...prev, url]);
-    setValue("referenceLinks", [...referenceLinks, url]);
-  };
-
-  const deleteReferenceLink = (index: number) => {
-    setReferenceLinks((prev) =>
-      prev.filter((_, i) => i !== index),
-    );
-    setValue(
-      "referenceLinks",
-      referenceLinks.filter((_, i) => i !== index),
-    );
   };
 
   // Section handlers
@@ -346,7 +355,7 @@ export const useArtifactForm = () => {
     handleMediaUpload,
     handleMediaDelete,
 
-    // Reference Links management
+    // Reference link management
     referenceLinks,
     addReferenceLink,
     deleteReferenceLink,
