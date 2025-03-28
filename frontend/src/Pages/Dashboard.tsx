@@ -1,16 +1,12 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
+import { ToastContainer, toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 import Trash from "../assets/trash.png";
 import { Button } from "../Components/Button";
+import Modal from "../Components/Modal";
 import { FormData, FileType } from "../types/artifacts";
-
-// API response types
-interface APIResponse<T> {
-  success: boolean;
-  data?: T;
-  error?: string;
-}
 
 interface ArtifactPreviewProps {
   id: string;
@@ -92,22 +88,45 @@ export const Dashboard = () => {
   const [artifacts, setArtifacts] = useState<APIArtifact[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [deleteItemId, setDeleteItemId] = useState<string | null>(null);
 
-  const handleDelete = async (id: string) => {
-    if (window.confirm("Are you sure you want to delete this artifact?")) {
-      try {
-        const response = await axios.delete<APIResponse<void>>(`/api/artifacts/${id}`);
-        if (response.data.success) {
-          setArtifacts(artifacts.filter(artifact => artifact.id !== id));
-        } else {
-          throw new Error(response.data.error || "Failed to delete artifact");
-        }
-      } catch (err) {
-        const errorMessage = err instanceof Error ? err.message : "Failed to delete artifact";
-        console.error("Error deleting artifact:", err);
-        alert(errorMessage);
+  const handleDeleteClick = (id: string) => {
+    setDeleteItemId(id);
+    setShowDeleteModal(true);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!deleteItemId) return;
+
+    try {
+      const response = await axios.delete(`/api/artifacts/${deleteItemId}`);
+      
+      // Status 204 indicates successful deletion with no content
+      if (response.status === 204) {
+        setArtifacts(artifacts.filter(artifact => artifact.id !== deleteItemId));
+        toast.success("Artifact deleted successfully");
       }
+    } catch (err) {
+      console.error("Error deleting artifact:", err);
+      if (axios.isAxiosError(err)) {
+        if (err.response?.status === 404) {
+          toast.error("Artifact not found");
+        } else {
+          toast.error("Failed to delete artifact. Please try again.");
+        }
+      } else {
+        toast.error("An unexpected error occurred");
+      }
+    } finally {
+      setShowDeleteModal(false);
+      setDeleteItemId(null);
     }
+  };
+
+  const handleDeleteCancel = () => {
+    setShowDeleteModal(false);
+    setDeleteItemId(null);
   };
 
   useEffect(() => {
@@ -167,10 +186,37 @@ export const Dashboard = () => {
             zoneName={artifact.zoneName}
             artifactName={artifact.artifactName}
             description={artifact.description}
-            onDelete={handleDelete}
+            onDelete={handleDeleteClick}
           />
         ))}
       </div>
+
+      {/* Delete Confirmation Modal */}
+      <Modal
+        isOpen={showDeleteModal}
+        onClose={handleDeleteCancel}
+        title="Delete Artifact"
+      >
+        <div className="p-4">
+          <p className="mb-4">Are you sure you want to delete this artifact?</p>
+          <div className="flex justify-end gap-4">
+            <button
+              onClick={handleDeleteCancel}
+              className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={handleDeleteConfirm}
+              className="px-4 py-2 bg-red-500 text-white hover:bg-red-600 rounded"
+            >
+              Delete
+            </button>
+          </div>
+        </div>
+      </Modal>
+
+      <ToastContainer position="bottom-right" />
     </div>
   );
 };
