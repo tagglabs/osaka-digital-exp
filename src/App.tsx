@@ -9,11 +9,13 @@ import { Dashboard } from "./Pages/Dashboard";
 import EditCms from "./Pages/EditCms";
 import { AuthProvider } from "./contexts/AuthContext";
 import ProtectedRoute from "./Components/ProtectedRoute";
+import { ToastContainer } from "react-toastify";
 
 function App() {
   return (
     <AuthProvider>
       <BrowserRouter>
+        <ToastContainer />
         <Routes>
           <Route
             path="*"
@@ -51,7 +53,6 @@ function App() {
               </ProtectedRoute>
             }
           />
-
         </Routes>
       </BrowserRouter>
     </AuthProvider>

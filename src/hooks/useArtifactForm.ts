@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import axios from "axios";
+import { toast } from "react-toastify";
 import {
   artifactSchema,
   FormData,
@@ -57,8 +58,6 @@ export const useArtifactForm = () => {
     handleSubmit,
     formState: { errors },
     reset,
-    setError,
-    clearErrors,
     setValue,
   } = useForm<FormData>({
     resolver: zodResolver(artifactSchema),
@@ -76,7 +75,11 @@ export const useArtifactForm = () => {
 
   // Keep form sections in sync with local state
   useEffect(() => {
-    setValue("sections", sections);
+    // Ensure sections array always has at least one element in the correct tuple format
+    setValue("sections", [
+      sections[0] || { title: "Overview", content: "" },
+      ...sections.slice(1)
+    ]);
   }, [sections, setValue]);
 
   // QR Code handlers
@@ -151,17 +154,8 @@ export const useArtifactForm = () => {
   // Reference Links handlers
   const addReferenceLink = (url: string) => {
     if (!url.trim()) return;
-    try {
-      new URL(url); // Validate URL
-      setReferenceLinks((prev) => [...prev, url]);
-      setValue("referenceLinks", [...referenceLinks, url]);
-    } catch (e) {
-      console.error("Invalid URL:", e);
-      setError("referenceLinks", {
-        type: "manual",
-        message: "Please enter a valid URL",
-      });
-    }
+    setReferenceLinks((prev) => [...prev, url]);
+    setValue("referenceLinks", [...referenceLinks, url]);
   };
 
   const deleteReferenceLink = (index: number) => {
@@ -193,80 +187,18 @@ export const useArtifactForm = () => {
     newSections[index] = { title, content };
     setSections(newSections);
     setActiveSection(index);
-
-    // Validate section content
-    if (!title || !content) {
-      setError(`sections.${index}`, {
-        type: "manual",
-        message: "Both title and content are required",
-      });
-    } else {
-      clearErrors(`sections.${index}`);
-    }
+    // Ensure it matches the tuple schema [first, ...rest]
+    setValue("sections", [
+      sections[0] || { title: "Overview", content: "" },
+      ...sections.slice(1)
+    ]);
   };
 
   // Form submission handler
   const onSubmit = async (data: FormData) => {
     setIsSubmitting(true);
-    clearErrors();
 
     try {
-      // Validate required fields
-      if (!data.zoneName?.trim()) {
-        setError("zoneName", {
-          message: "Zone name is required",
-        });
-        setIsSubmitting(false);
-        return;
-      }
-
-      if (!data.artifactName?.trim()) {
-        setError("artifactName", {
-          message: "Artifact name is required",
-        });
-        setIsSubmitting(false);
-        return;
-      }
-
-      if (!data.artifactName?.trim()) {
-        setError("artifactName", {
-          message: "Artifact name is required",
-        });
-        setIsSubmitting(false);
-        return;
-      }
-
-      if (!data.description?.trim()) {
-        setError("description", {
-          message: "Description is required",
-        });
-        setIsSubmitting(false);
-        return;
-      }
-
-      // Validate sections
-      if (!sections.length) {
-        setError("sections", {
-          message: "At least one section is required",
-        });
-        setIsSubmitting(false);
-        return;
-      }
-
-      for (let i = 0; i < sections.length; i++) {
-        if (
-          !sections[i].title.trim() ||
-          !sections[i].content.trim()
-        ) {
-          setError(`sections.${i}`, {
-            message: "Both title and content are required",
-          });
-          setIsSubmitting(false);
-          return;
-        }
-      }
-
-      // Skip initial Zod validation as it will fail without uploaded files
       console.log("Proceeding with file upload...");
 
       // Upload all files and get their details
@@ -278,10 +210,18 @@ export const useArtifactForm = () => {
         zoneName: data.zoneName,
         artifactName: data.artifactName.trim(),
         description: data.description.trim(),
-        sections: sections.map((section) => ({
-          title: section.title.trim(),
-          content: section.content.trim(),
-        })),
+        sections: [
+          // Ensure at least one section exists
+          {
+            title: sections[0]?.title.trim() || "Overview",
+            content: sections[0]?.content.trim() || "",
+          },
+          // Add remaining sections
+          ...sections.slice(1).map((section) => ({
+            title: section.title.trim(),
+            content: section.content.trim(),
+          })),
+        ],
         pdfs: uploadResult.pdfs.map((file) => ({
           ...file,
           uploadDate: new Date().toISOString(),
@@ -316,28 +256,16 @@ export const useArtifactForm = () => {
       };
 
       // Validate submission data
-      const finalValidation =
-        artifactSchema.safeParse(submissionData);
+      const finalValidation = artifactSchema.safeParse(submissionData);
       if (!finalValidation.success) {
-        console.error(
-          "Final validation failed:",
-          finalValidation.error,
-        );
-        setError("root", {
-          message: "Invalid form data structure",
-        });
+        console.error("Final validation failed:", finalValidation.error);
+        toast.error(finalValidation.error.errors[0]?.message || "Invalid form data structure");
         setIsSubmitting(false);
         return;
       }
 
-      console.log(
-        "Final validation passed, submitting to API",
-        submissionData,
-      );
-
       // Submit to artifacts API
       const response = await axios.post<ArtifactResponse>("/api/artifacts", submissionData);
-      console.log("API submission successful");
 
       // Store artifact info from response
       setArtifact({
@@ -352,14 +280,14 @@ export const useArtifactForm = () => {
       uploadManager.reset();
       setActiveSection(0);
 
-      alert("Artifact created successfully!");
+      toast.success("Artifact created successfully!");
     } catch (error) {
       console.error("Error submitting form:", error);
-      setError("root", {
-        message: axios.isAxiosError(error)
+      toast.error(
+        axios.isAxiosError(error)
           ? error.response?.data?.message || error.message
-          : "Failed to create artifact",
-      });
+          : "Failed to create artifact"
+      );
     } finally {
       setIsSubmitting(false);
     }
