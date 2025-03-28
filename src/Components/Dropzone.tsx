@@ -1,12 +1,12 @@
 import dropzone from "../assets/dropzone.png";
-import { useCallback, useRef } from "react";
+import { useCallback, useEffect, useRef } from "react";
 
 interface DropzoneProps {
   onDrop?: (files: File[]) => void;
   accept?: string;
   multiple?: boolean;
   id: string; // Unique identifier for each dropzone
-  error?: string;
+  error: string | false;
 }
 
 export const Dropzone = ({
@@ -93,7 +93,7 @@ export const Dropzone = ({
         />
       </label>
       {error && (
-        <p className="mt-1 text-sm text-red-500 self-start">
+        <p className="mt-1 text-sm text-red-500 self-center">
           {error}
         </p>
       )}

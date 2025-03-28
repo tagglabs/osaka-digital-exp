@@ -6,7 +6,6 @@ import {
 import { FormData } from "../types/artifacts";
 import { Input } from "../Components/Input";
 import { Select } from "../Components/Select";
-import { artifactSchema } from "../types/artifacts";
 import { Dropzone } from "../Components/Dropzone";
 
 interface ArtifactDetailsProps {
@@ -34,7 +33,17 @@ const ArtifactDetails: React.FC<ArtifactDetailsProps> = ({
             placeholder="Select zone"
             {...register("zoneName")}
             error={errors.zoneName?.message}
-            options={["zone1", "zone2", "zone3", "zone4", "zone5", "zone6", "zone7", "zone8", "zone9"]}
+            options={[
+              "zone1",
+              "zone2",
+              "zone3",
+              "zone4",
+              "zone5",
+              "zone6",
+              "zone7",
+              "zone8",
+              "zone9",
+            ]}
           />
           <Input
             label="Enter artifact name *"
@@ -58,6 +67,10 @@ const ArtifactDetails: React.FC<ArtifactDetailsProps> = ({
               id="profile"
               onDrop={onProfileUpload}
               accept="image/*"
+              error={
+                profilePreview === null &&
+                ("Profile picture is required !" as string)
+              }
             />
             {profilePreview && (
               <div className="absolute right-10 top-8 w-[100px] h-[100px]">
