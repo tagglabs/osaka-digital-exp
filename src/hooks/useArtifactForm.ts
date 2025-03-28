@@ -210,7 +210,6 @@ export const useArtifactForm = () => {
         setIsSubmitting(false);
         return;
       }
-      console.log("Proceeding with file upload...");
 
       // Upload all files and get their details
       const uploadResult = await uploadManager.uploadAll();

@@ -1,6 +1,7 @@
 import { Button } from "../Components/Button";
 import { Input } from "../Components/Input";
 import { Section } from "../Components/Section";
+import { ExclamationCircleIcon } from "@heroicons/react/24/solid";
 import { useArtifactForm } from "../hooks/useArtifactForm";
 import ArtifactDetails from "../Components/ArtifactDetails";
 import DocumentUploads from "../Components/DocumentUploads";
@@ -56,14 +57,11 @@ function Cms() {
 
       {/* Sections */}
       <div className="pt-12">
-        <h3 className="uppercase text-left pb-5">
-          Section Subheadings
-        </h3>
-        {errors.sections && (
-          <p className="text-red-500 text-sm mb-2">
-            {errors.sections.message}
-          </p>
-        )}
+        <div className="flex items-center justify-between mb-5">
+          <h3 className="uppercase text-left">
+            Section Subheadings
+          </h3>
+        </div>
         <Section
           sections={sections}
           activeSection={activeSection}
