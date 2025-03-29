@@ -6,7 +6,7 @@ export default defineConfig({
   server: {
     proxy: {
       "/api": {
-        target: "https://b1.tagg.live/osaka25-artifact-cms",
+        target: "http://localhost:3000",
         changeOrigin: true,
       },
     },

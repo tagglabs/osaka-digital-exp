@@ -6,12 +6,24 @@ import {
   useEffect,
   ReactNode,
 } from "react";
+import { toast } from "react-toastify";
+
+interface AuthState {
+  isAuthenticated: boolean;
+  email: string | null;
+}
+
+interface AuthResponse {
+  success: boolean;
+  email?: string;
+  message?: string;
+}
 
 interface AuthContextType {
-  auth: boolean;
+  auth: AuthState;
   isLoading: boolean;
   error: string | null;
-  setAuth: (auth: boolean) => void;
+  setAuth: (auth: AuthState) => void;
   login: (email: string) => Promise<boolean>;
   logout: () => void;
 }
@@ -20,14 +32,13 @@ interface AuthProviderProps {
   children: ReactNode;
 }
 
-const AuthContext = createContext<
-  AuthContextType | undefined
->(undefined);
+const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-export function AuthProvider({
-  children,
-}: AuthProviderProps) {
-  const [auth, setAuth] = useState(false);
+export function AuthProvider({ children }: AuthProviderProps) {
+  const [auth, setAuth] = useState<AuthState>({
+    isAuthenticated: false,
+    email: null,
+  });
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -40,17 +51,47 @@ export function AuthProvider({
       }
 
       try {
-        const response = await axios.post(
-          `/api/admin/auth`,
-          {
-            email: storedAuth,
-          },
-        );
+        const response = await axios.post<AuthResponse>(`/api/admin/auth`, {
+          email: storedAuth,
+        });
 
-        setAuth(response.data === true);
+        if (response.data.success) {
+          setAuth({
+            isAuthenticated: true,
+            email: response.data.email || null,
+          });
+        } else {
+          setAuth({
+            isAuthenticated: false,
+            email: null,
+          });
+          const errorMessage = response.data.message || "Authentication failed";
+          setError(errorMessage);
+          toast.error(errorMessage, {
+            position: "top-right",
+            autoClose: 3000,
+            hideProgressBar: false,
+            closeOnClick: true,
+            pauseOnHover: true,
+            draggable: true,
+          });
+          localStorage.removeItem("authToken");
+        }
       } catch (err) {
-        setError("Failed to validate authentication");
-        setAuth(false);
+        const errorMessage = "Failed to validate authentication";
+        setError(errorMessage);
+        toast.error(errorMessage, {
+          position: "top-right",
+          autoClose: 3000,
+          hideProgressBar: false,
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: true,
+        });
+        setAuth({
+          isAuthenticated: false,
+          email: null,
+        });
         localStorage.removeItem("authToken");
       } finally {
         setIsLoading(false);
@@ -65,19 +106,60 @@ export function AuthProvider({
     setError(null);
 
     try {
-      const response = await axios.post(`/api/admin/auth`, {
+      const response = await axios.post<AuthResponse>(`/api/admin/auth`, {
         email: email,
       });
-      const isAuthenticated = response.data === true;
 
-      if (isAuthenticated) {
-        setAuth(true);
+      if (response.data.success) {
+        setAuth({
+          isAuthenticated: true,
+          email: response.data.email || null,
+        });
         localStorage.setItem("authToken", email);
+        toast.success("Login successful!", {
+          position: "top-right",
+          autoClose: 3000,
+          hideProgressBar: false,
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: true,
+        });
         return true;
       }
+
+      setAuth({
+        isAuthenticated: false,
+        email: null,
+      });
+      const errorMessage = response.data.message || "Email not authorized";
+      setError(errorMessage);
+      toast.error(errorMessage, {
+        position: "top-right",
+        autoClose: 3000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+      });
       return false;
     } catch (err) {
-      setError("Login failed. Please try again.");
+      let errorMessage = "Login failed. Please try again.";
+      if (axios.isAxiosError(err) && err.response?.data?.message) {
+        errorMessage = err.response.data.message;
+      }
+      setError(errorMessage);
+      toast.error(errorMessage, {
+        position: "top-right",
+        autoClose: 3000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+      });
+      setAuth({
+        isAuthenticated: false,
+        email: null,
+      });
       return false;
     } finally {
       setIsLoading(false);
@@ -85,9 +167,20 @@ export function AuthProvider({
   };
 
   const logout = () => {
-    setAuth(false);
+    setAuth({
+      isAuthenticated: false,
+      email: null,
+    });
     setError(null);
     localStorage.removeItem("authToken");
+    toast.info("Logged out successfully", {
+      position: "top-right",
+      autoClose: 3000,
+      hideProgressBar: false,
+      closeOnClick: true,
+      pauseOnHover: true,
+      draggable: true,
+    });
   };
 
   const value = {
@@ -109,9 +202,7 @@ export function AuthProvider({
 export function useAuth() {
   const context = useContext(AuthContext);
   if (context === undefined) {
-    throw new Error(
-      "useAuth must be used within an AuthProvider",
-    );
+    throw new Error("useAuth must be used within an AuthProvider");
   }
   return context;
 }
