@@ -13,6 +13,7 @@ import ArtifactDetails from "../Components/ArtifactDetails";
 import DocumentUploads from "../Components/DocumentUploads";
 import MediaGallery from "../Components/MediaGallery";
 import AudioUpload from "../Components/AudioUpload";
+import LanguageToggle from "../Components/LanguageToggle";
 import {
   FormData,
   artifactSchema,
@@ -26,6 +27,9 @@ function EditCms() {
   const { id } = useParams<{ id: string }>();
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [language, setLanguage] = useState<"en" | "jp">(
+    "en",
+  );
   const [existingProfile, setExistingProfile] =
     useState<FileDetails | null>(null);
   const [existingPdfs, setExistingPdfs] = useState<
@@ -40,6 +44,10 @@ function EditCms() {
     });
   const [activeSection, setActiveSection] = useState(0);
   const linkInputRef = useRef<HTMLInputElement>(null);
+
+  const toggleLanguage = () => {
+    setLanguage((prev) => (prev === "en" ? "jp" : "en"));
+  };
 
   const handleAddLink = (
     input: HTMLInputElement | null,
@@ -76,7 +84,14 @@ function EditCms() {
       zoneName: undefined,
       artifactName: "",
       description: "",
-      sections: [{ title: "Overview", content: "" }],
+      sections: [
+        {
+          title: "Overview",
+          content: "",
+          titleJap: "",
+          contentJap: "",
+        },
+      ],
       pdfs: [],
       mediaGallery: [],
       audioGuide: undefined,
@@ -138,14 +153,16 @@ function EditCms() {
     index: number,
     title: string,
     content: string,
+    titleJap?: string,
+    contentJap?: string,
   ) => {
     setActiveSection(index);
     const updatedSections = [...form.getValues().sections];
     updatedSections[index] = {
       title: title.trim(),
       content: content.trim(),
-      titleJap: updatedSections[index]?.titleJap,
-      contentJap: updatedSections[index]?.contentJap,
+      titleJap: titleJap?.trim() || "",
+      contentJap: contentJap?.trim() || "",
     };
 
     // Ensure we have the correct tuple structure [first, ...rest]
@@ -169,14 +186,14 @@ function EditCms() {
     const firstSection = currentSections[0] || {
       title: "Overview",
       content: "",
-      titleJap: undefined,
-      contentJap: undefined,
+      titleJap: "",
+      contentJap: "",
     };
     const newSection = {
       title: "Untitled",
       content: "",
-      titleJap: undefined,
-      contentJap: undefined,
+      titleJap: "",
+      contentJap: "",
     };
 
     form.setValue(
@@ -344,7 +361,8 @@ function EditCms() {
       };
 
       // Validate final data structure
-      const validationResult = artifactSchema.safeParse(updateData);
+      const validationResult =
+        artifactSchema.safeParse(updateData);
       if (!validationResult.success) {
         toast.error("Failed to update artifact");
         setIsSubmitting(false);
@@ -384,8 +402,15 @@ function EditCms() {
       onSubmit={form.handleSubmit(handleFormSubmit)}
       className="flex flex-col h-screen w-screen p-10 gap-10 px-20 overflow-x-hidden"
     >
+      {/* Language Toggle */}
+      <LanguageToggle
+        language={language}
+        onToggle={toggleLanguage}
+      />
+
       {/* Artifact Details Section */}
       <ArtifactDetails
+        language={language}
         register={form.register}
         errors={form.formState.errors}
         onProfileUpload={(files) => {
@@ -429,7 +454,13 @@ function EditCms() {
           </p>
         )}
         <Section
-          sections={form.getValues().sections}
+          sections={form
+            .getValues()
+            .sections.map((section) => ({
+              ...section,
+              titleJap: section.titleJap || "",
+              contentJap: section.contentJap || "",
+            }))}
           activeSection={activeSection}
           onChange={handleSectionChange}
           onAdd={addNewSection}
@@ -437,6 +468,7 @@ function EditCms() {
             form.formState.errors.sections?.[activeSection]
               ?.message
           }
+          language={language}
         />
       </div>
 
