@@ -29,7 +29,7 @@ const uploadFile = async (
   formData.append("type", type);
 
   const response = await axios.post<{ fileURL: string }>(
-    "/api/upload",
+    `${import.meta.env.VITE_BACKEND_URL}/api/upload`,
     formData,
     {
       headers: {

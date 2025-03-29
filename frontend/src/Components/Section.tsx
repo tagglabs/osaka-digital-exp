@@ -2,6 +2,7 @@ import { Input } from "./Input";
 import { Button } from "./Button";
 import { forwardRef } from "react";
 import { ExclamationCircleIcon } from "@heroicons/react/24/solid";
+import Trash from "../assets/trash.png";
 
 export type Section = {
   title: string;
@@ -21,6 +22,7 @@ interface SectionProps {
     contentJap?: string,
   ) => void;
   onAdd: () => void;
+  onDelete?: (index: number) => void;
   error?: string;
   language: "en" | "jp";
 }
@@ -35,6 +37,7 @@ export const Section = forwardRef<
       activeSection,
       onChange,
       onAdd,
+      onDelete,
       error,
       language,
       ...props
@@ -200,14 +203,26 @@ export const Section = forwardRef<
                     ? section.title || "Untitled"
                     : section.titleJap || "無題"}
                 </span>
-                {(!section.title || !section.content) && (
-                  <div className="flex items-center text-red-500">
-                    <ExclamationCircleIcon className="h-5 w-5 mr-1" />
-                    <span className="text-xs">
-                      Incomplete
-                    </span>
-                  </div>
-                )}
+                <div className="flex items-center">
+                  {(!section.title || !section.content) ? (
+                    <div className="flex items-center text-red-500">
+                      <ExclamationCircleIcon className="h-5 w-5 mr-1" />
+                      <span className="text-xs">
+                        Incomplete
+                      </span>
+                    </div>
+                  ) : index !== 0 && onDelete && (
+                    <img
+                      src={Trash}
+                      alt="delete"
+                      className="cursor-pointer h-5 w-5 ml-2"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onDelete(index);
+                      }}
+                    />
+                  )}
+                </div>
               </button>
             ))}
             <div className="mt-2">

@@ -51,7 +51,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       }
 
       try {
-        const response = await axios.post<AuthResponse>(`/api/admin/auth`, {
+        const response = await axios.post<AuthResponse>(`${import.meta.env.VITE_BACKEND_URL}/api/admin/auth`, {
           email: storedAuth,
         });
 
@@ -106,7 +106,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     setError(null);
 
     try {
-      const response = await axios.post<AuthResponse>(`/api/admin/auth`, {
+      const response = await axios.post<AuthResponse>(`${import.meta.env.VITE_BACKEND_URL}/api/admin/auth`, {
         email: email,
       });
 

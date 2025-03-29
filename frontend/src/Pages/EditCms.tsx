@@ -213,7 +213,9 @@ function EditCms() {
     const fetchArtifact = async () => {
       try {
         const response = await axios.get(
-          `/api/artifacts/${id}`,
+          `${
+            import.meta.env.VITE_BACKEND_URL
+          }/api/artifacts/${id}`,
         );
         const artifact: FormData = response.data;
 
@@ -369,7 +371,9 @@ function EditCms() {
         return;
       }
 
-      await axios.put(`/api/artifacts/${id}`, updateData);
+      await axios.put(`${
+        import.meta.env.VITE_BACKEND_URL
+      }/api/artifacts/${id}`, updateData);
       uploadManager.reset();
       toast.success("Artifact updated successfully!");
     } catch (error) {
