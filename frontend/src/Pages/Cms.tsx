@@ -37,7 +37,6 @@ function Cms() {
     referenceLinks,
     addReferenceLink,
     deleteReferenceLink,
-    // QR Code related props
     isQRModalOpen,
     setIsQRModalOpen,
     handleDownloadQR,
@@ -48,7 +47,7 @@ function Cms() {
   return (
     <form
       onSubmit={handleSubmit}
-      className="flex flex-col h-screen w-screen p-10 gap-10 px-20 relative"
+      className="flex flex-col h-screen w-screen p-10 gap-10 px-20 overflow-x-hidden relative"
     >
       {/* Artifact Details Section */}
       {/* Language Toggle */}
@@ -141,7 +140,6 @@ function Cms() {
       <AudioUpload
         audioFile={audioFile}
         onFileUpload={handleAudioUpload}
-        // onDelete={() => handleAudioUpload()}
         error={errors.audioGuide?.message}
       />
 

@@ -1,4 +1,5 @@
-import { useEffect, useState, useCallback, useRef } from "react";
+import { useEffect, useState, useRef } from "react";
+import { toast } from "react-toastify";
 import { useParams } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -12,36 +13,58 @@ import ArtifactDetails from "../Components/ArtifactDetails";
 import DocumentUploads from "../Components/DocumentUploads";
 import MediaGallery from "../Components/MediaGallery";
 import AudioUpload from "../Components/AudioUpload";
-import { FormData, SectionType, artifactSchema, FileType } from "../types/artifacts";
-import { FileDetails, MediaGallery as MediaGalleryType } from "../types/uploadManager";
+import {
+  FormData,
+  artifactSchema,
+} from "../types/artifacts";
+import {
+  FileDetails,
+  MediaGallery as MediaGalleryType,
+} from "../types/uploadManager";
 
 function EditCms() {
   const { id } = useParams<{ id: string }>();
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [existingProfile, setExistingProfile] = useState<FileDetails | null>(null);
-  const [existingPdfs, setExistingPdfs] = useState<FileDetails[]>([]);
-  const [existingAudio, setExistingAudio] = useState<FileDetails | null>(null);
-  const [existingMedia, setExistingMedia] = useState<MediaGalleryType>({
-    images: [],
-    videos: [],
-  });
+  const [existingProfile, setExistingProfile] =
+    useState<FileDetails | null>(null);
+  const [existingPdfs, setExistingPdfs] = useState<
+    FileDetails[]
+  >([]);
+  const [existingAudio, setExistingAudio] =
+    useState<FileDetails | null>(null);
+  const [existingMedia, setExistingMedia] =
+    useState<MediaGalleryType>({
+      images: [],
+      videos: [],
+    });
   const [activeSection, setActiveSection] = useState(0);
   const linkInputRef = useRef<HTMLInputElement>(null);
 
-  const handleAddLink = (input: HTMLInputElement | null) => {
+  const handleAddLink = (
+    input: HTMLInputElement | null,
+  ) => {
     if (!input?.value) return;
-    
-    try {
-      const url = new URL(input.value); // Validate URL
-      const currentLinks = form.getValues().referenceLinks || [];
-      form.setValue('referenceLinks', [...currentLinks, input.value], { shouldValidate: true });
-      input.value = ''; // Clear input after successful add
+
+    // Use schema validation for URL
+    const result =
+      artifactSchema.shape.referenceLink.safeParse(
+        input.value,
+      );
+    if (result.success) {
+      const currentLinks =
+        form.getValues().referenceLinks || [];
+      form.setValue(
+        "referenceLinks",
+        [...currentLinks, input.value],
+        { shouldValidate: true },
+      );
+      input.value = ""; // Clear input after successful add
       form.clearErrors("referenceLinks");
-    } catch (e) {
+    } else {
       form.setError("referenceLinks", {
         type: "manual",
-        message: "Please enter a valid URL"
+        message: "Enter a valid url !", // Match schema error message
       });
     }
   };
@@ -57,13 +80,10 @@ function EditCms() {
       pdfs: [],
       mediaGallery: [],
       audioGuide: undefined,
-      referenceLinks: []
+      referenceLinks: [],
     },
-    mode: 'onChange'  // Enable validation on change
+    mode: "onChange", // Enable validation on change
   });
-
-  // Watch for referenceLinks changes to force re-render on updates
-  const referenceLinks = form.watch('referenceLinks');
 
   const uploadManager = useUploadManager();
   const uploadedFiles = uploadManager.getSelectedFiles();
@@ -79,12 +99,20 @@ function EditCms() {
     uploadManager.addFile("pdf", files);
   };
 
-  const handleMediaUpload = (type: "image" | "video") => (files: File[]) => {
-    uploadManager.addFile(type, files);
-  };
+  const handleMediaUpload =
+    (type: "image" | "video") => (files: File[]) => {
+      uploadManager.addFile(type, files);
+      form.clearErrors("mediaGallery");
+    };
 
-  const handleMediaDelete = (index: number, type: "image" | "video") => {
-    const files = type === "image" ? uploadedFiles.media.images : uploadedFiles.media.videos;
+  const handleMediaDelete = (
+    index: number,
+    type: "image" | "video",
+  ) => {
+    const files =
+      type === "image"
+        ? uploadedFiles.media.images
+        : uploadedFiles.media.videos;
     const fileToDelete = files[index];
     if (fileToDelete) {
       uploadManager.removeFile(type, fileToDelete.name);
@@ -106,35 +134,70 @@ function EditCms() {
     }
   };
 
-
-  const handleSectionChange = (index: number, title: string, content: string) => {
+  const handleSectionChange = (
+    index: number,
+    title: string,
+    content: string,
+  ) => {
     setActiveSection(index);
     const updatedSections = [...form.getValues().sections];
-    updatedSections[index] = { title, content };
-    form.setValue('sections', updatedSections, { shouldValidate: true });
+    updatedSections[index] = {
+      title: title.trim(),
+      content: content.trim(),
+      titleJap: updatedSections[index]?.titleJap,
+      contentJap: updatedSections[index]?.contentJap,
+    };
+
+    // Ensure we have the correct tuple structure [first, ...rest]
+    const firstSection = updatedSections[0] || {
+      title: "Overview",
+      content: "",
+      titleJap: undefined,
+      contentJap: undefined,
+    };
+    const restSections = updatedSections.slice(1);
+
+    form.setValue(
+      "sections",
+      [firstSection, ...restSections],
+      { shouldValidate: true },
+    );
   };
 
   const addNewSection = () => {
     const currentSections = form.getValues().sections;
-    form.setValue('sections', [...currentSections, { title: '', content: '' }], { shouldValidate: true });
-    setActiveSection(currentSections.length);
-  };
+    const firstSection = currentSections[0] || {
+      title: "Overview",
+      content: "",
+      titleJap: undefined,
+      contentJap: undefined,
+    };
+    const newSection = {
+      title: "Untitled",
+      content: "",
+      titleJap: undefined,
+      contentJap: undefined,
+    };
 
-  // Convert file details to File objects for preview
-  const convertToFiles = (pdfs: FileType[]) => {
-    return pdfs.map(pdf => {
-      const response = fetch(pdf.fileURL)
-        .then(res => res.blob())
-        .then(blob => new File([blob], pdf.originalName, { type: pdf.mimeType }));
-      return response;
-    });
+    form.setValue(
+      "sections",
+      [
+        firstSection,
+        ...currentSections.slice(1),
+        newSection,
+      ],
+      { shouldValidate: true },
+    );
+    setActiveSection(currentSections.length);
   };
 
   // Fetch artifact details
   useEffect(() => {
     const fetchArtifact = async () => {
       try {
-        const response = await axios.get(`/api/artifacts/${id}`);
+        const response = await axios.get(
+          `/api/artifacts/${id}`,
+        );
         const artifact: FormData = response.data;
 
         // Set form values
@@ -146,7 +209,7 @@ function EditCms() {
           pdfs: artifact.pdfs || [],
           mediaGallery: artifact.mediaGallery || [],
           profilePicture: artifact.profilePicture,
-          referenceLinks: artifact.referenceLinks || []
+          referenceLinks: artifact.referenceLinks || [],
         });
 
         // Reference links are handled by form state
@@ -155,16 +218,18 @@ function EditCms() {
         if (artifact.profilePicture) {
           setExistingProfile({
             ...artifact.profilePicture,
-            preview: artifact.profilePicture.fileURL
+            preview: artifact.profilePicture.fileURL,
           } as FileDetails);
         }
 
         // Set existing PDFs
         if (artifact.pdfs && artifact.pdfs.length > 0) {
-          const pdfsWithPreviews = artifact.pdfs.map(pdf => ({
-            ...pdf,
-            preview: pdf.fileURL
-          })) as FileDetails[];
+          const pdfsWithPreviews = artifact.pdfs.map(
+            (pdf) => ({
+              ...pdf,
+              preview: pdf.fileURL,
+            }),
+          ) as FileDetails[];
           setExistingPdfs(pdfsWithPreviews);
         }
 
@@ -175,12 +240,12 @@ function EditCms() {
           artifact.mediaGallery.forEach((file) => {
             const fileWithPreview = {
               ...file,
-              preview: file.fileURL
+              preview: file.fileURL,
             } as FileDetails;
 
-            if (file.mimeType.startsWith('image/')) {
+            if (file.mimeType.startsWith("image/")) {
               images.push(fileWithPreview);
-            } else if (file.mimeType.startsWith('video/')) {
+            } else if (file.mimeType.startsWith("video/")) {
               videos.push(fileWithPreview);
             }
           });
@@ -192,12 +257,11 @@ function EditCms() {
         if (artifact.audioGuide) {
           setExistingAudio({
             ...artifact.audioGuide,
-            preview: artifact.audioGuide.fileURL
+            preview: artifact.audioGuide.fileURL,
           } as FileDetails);
         }
-
       } catch (error) {
-        console.error("Error fetching artifact:", error);
+        toast.error("Error fetching artifact details");
       } finally {
         setIsLoading(false);
       }
@@ -211,54 +275,90 @@ function EditCms() {
   const handleFormSubmit = async (formData: FormData) => {
     if (!id) return;
     setIsSubmitting(true);
-    
+
     try {
+      // Validate profile picture is present
+      if (
+        !uploadedFiles.profilePicture &&
+        !existingProfile
+      ) {
+        form.setError("profilePicture", {
+          type: "manual",
+          message: "Profile picture is required",
+        });
+        setIsSubmitting(false);
+        return;
+      }
+
       // First upload all new files
       const uploadResult = await uploadManager.uploadAll();
 
-      // Combine existing and newly uploaded files
+      // Prepare submission data
+      const timestamp = new Date().toISOString();
       const updateData = {
         ...formData,
+        sections: formData.sections.map((section) => ({
+          title: section.title.trim(),
+          content: section.content.trim(),
+          titleJap: section.titleJap?.trim(),
+          contentJap: section.contentJap?.trim(),
+        })),
         pdfs: [
           ...existingPdfs,
-          ...uploadResult.pdfs.map(file => ({
+          ...uploadResult.pdfs.map((file) => ({
             ...file,
-            uploadDate: new Date().toISOString()
-          }))
+            uploadDate: timestamp,
+          })),
         ],
         mediaGallery: [
           ...existingMedia.images,
           ...existingMedia.videos,
-          ...uploadResult.mediaGallery.images.map(file => ({
-            ...file,
-            uploadDate: new Date().toISOString()
-          })),
-          ...uploadResult.mediaGallery.videos.map(file => ({
-            ...file,
-            uploadDate: new Date().toISOString()
-          }))
+          ...uploadResult.mediaGallery.images.map(
+            (file) => ({
+              ...file,
+              uploadDate: timestamp,
+            }),
+          ),
+          ...uploadResult.mediaGallery.videos.map(
+            (file) => ({
+              ...file,
+              uploadDate: timestamp,
+            }),
+          ),
         ],
-        profilePicture: uploadResult.profilePicture ? {
-          ...uploadResult.profilePicture,
-          uploadDate: new Date().toISOString()
-        } : existingProfile,
-        audioGuide: uploadResult.audioGuide ? {
-          ...uploadResult.audioGuide,
-          uploadDate: new Date().toISOString()
-        } : existingAudio,
-        referenceLinks: formData.referenceLinks
+        profilePicture: uploadResult.profilePicture
+          ? {
+              ...uploadResult.profilePicture,
+              uploadDate: timestamp,
+            }
+          : existingProfile,
+        audioGuide: uploadResult.audioGuide
+          ? {
+              ...uploadResult.audioGuide,
+              uploadDate: timestamp,
+            }
+          : existingAudio,
+        referenceLinks: formData.referenceLinks,
+        artifactNameJap: formData.artifactNameJap?.trim(),
+        descriptionJap: formData.descriptionJap?.trim(),
       };
 
+      // Validate final data structure
+      const validationResult = artifactSchema.safeParse(updateData);
+      if (!validationResult.success) {
+        toast.error("Failed to update artifact");
+        setIsSubmitting(false);
+        return;
+      }
+
       await axios.put(`/api/artifacts/${id}`, updateData);
-      alert("Artifact updated successfully!");
       uploadManager.reset();
+      toast.success("Artifact updated successfully!");
     } catch (error) {
       console.error("Error updating artifact:", error);
-      form.setError("root", {
-        message: axios.isAxiosError(error)
-          ? error.response?.data?.message || error.message
-          : "Failed to update artifact"
-      });
+      toast.error(
+        "Unable to update artifact. Please try again",
+      );
     } finally {
       setIsSubmitting(false);
     }
@@ -269,18 +369,20 @@ function EditCms() {
   }
 
   // Convert FileDetails to File objects for DocumentUploads
-  const existingPdfFiles = existingPdfs.map((pdf: FileDetails) => {
-    return new File(
-      [new Blob([], { type: pdf.mimeType })], 
-      pdf.originalName, 
-      { type: pdf.mimeType }
-    );
-  });
+  const existingPdfFiles = existingPdfs.map(
+    (pdf: FileDetails) => {
+      return new File(
+        [new Blob([], { type: pdf.mimeType })],
+        pdf.originalName,
+        { type: pdf.mimeType },
+      );
+    },
+  );
 
   return (
     <form
       onSubmit={form.handleSubmit(handleFormSubmit)}
-      className="flex flex-col h-screen w-screen p-10 gap-10 px-20"
+      className="flex flex-col h-screen w-screen p-10 gap-10 px-20 overflow-x-hidden"
     >
       {/* Artifact Details Section */}
       <ArtifactDetails
@@ -291,17 +393,29 @@ function EditCms() {
           setExistingProfile(null); // Clear existing when new one is uploaded
           const file = files[0];
           if (file) {
-            form.setValue('profilePicture', {
-              originalName: file.name,
-              fileName: file.name,
-              fileSize: file.size,
-              extension: file.name.split('.').pop() || '',
-              mimeType: file.type,
-              fileURL: URL.createObjectURL(file)
-            });
+            form.setValue(
+              "profilePicture",
+              {
+                originalName: file.name,
+                fileName: file.name,
+                fileSize: file.size,
+                extension: file.name.split(".").pop() || "",
+                mimeType: file.type,
+                fileURL: URL.createObjectURL(file),
+                uploadDate: new Date().toISOString(),
+              },
+              { shouldValidate: true },
+            );
           }
         }}
-        profilePreview={existingProfile?.fileURL || (uploadedFiles.profilePicture ? URL.createObjectURL(uploadedFiles.profilePicture) : null)}
+        profilePreview={
+          existingProfile?.fileURL ||
+          (uploadedFiles.profilePicture
+            ? URL.createObjectURL(
+                uploadedFiles.profilePicture,
+              )
+            : null)
+        }
       />
 
       {/* Sections */}
@@ -319,7 +433,10 @@ function EditCms() {
           activeSection={activeSection}
           onChange={handleSectionChange}
           onAdd={addNewSection}
-          error={form.formState.errors.sections?.[activeSection]?.message}
+          error={
+            form.formState.errors.sections?.[activeSection]
+              ?.message
+          }
         />
       </div>
 
@@ -337,13 +454,10 @@ function EditCms() {
                   placeholder="https://example.com"
                   defaultValue=""
                   ref={linkInputRef}
-                  error={form.formState.errors.referenceLinks?.message}
-                  onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>) => {
-                    if (e.key === 'Enter') {
-                      e.preventDefault();
-                      handleAddLink(linkInputRef.current);
-                    }
-                  }}
+                  error={
+                    form.formState.errors.referenceLinks
+                      ?.message
+                  }
                 />
               </div>
               <div className="w-40">
@@ -358,31 +472,38 @@ function EditCms() {
                 />
               </div>
             </div>
-            
+
             {/* Reference Link Previews */}
-            {(form.watch('referenceLinks') || []).map((link: string, index: number) => {
-              try {
-                const url = new URL(link);
-                return (
-                  <UploadPreview
-                    key={index}
-                    fileName={url.hostname}
-                    fileURL={link}
-                    onDelete={() => {
-                      const currentLinks = form.getValues().referenceLinks || [];
-                      form.setValue(
-                        'referenceLinks',
-                        currentLinks.filter((_: string, i: number) => i !== index),
-                        { shouldValidate: true }
-                      );
-                      form.clearErrors("referenceLinks");
-                    }}
-                  />
-                );
-              } catch (e) {
-                return null;
-              }
-            })}
+            {(form.watch("referenceLinks") || []).map(
+              (link: string, index: number) => {
+                try {
+                  const url = new URL(link);
+                  return (
+                    <UploadPreview
+                      key={index}
+                      fileName={url.hostname}
+                      fileURL={link}
+                      onDelete={() => {
+                        const currentLinks =
+                          form.getValues().referenceLinks ||
+                          [];
+                        form.setValue(
+                          "referenceLinks",
+                          currentLinks.filter(
+                            (_: string, i: number) =>
+                              i !== index,
+                          ),
+                          { shouldValidate: true },
+                        );
+                        form.clearErrors("referenceLinks");
+                      }}
+                    />
+                  );
+                } catch (e) {
+                  return null;
+                }
+              },
+            )}
           </div>
         </div>
       </div>
@@ -402,7 +523,9 @@ function EditCms() {
         onFileUpload={handlePdfUpload}
         onDelete={(index) => {
           if (index < existingPdfs.length) {
-            setExistingPdfs(pdfs => pdfs.filter((_, i) => i !== index));
+            setExistingPdfs((pdfs) =>
+              pdfs.filter((_, i) => i !== index),
+            );
           } else {
             handlePdfDelete(index - existingPdfs.length);
           }
@@ -414,18 +537,33 @@ function EditCms() {
       <MediaGallery
         mediaFiles={uploadedFiles.media}
         existingFiles={existingMedia}
-        onImageUpload={(files) => handleMediaUpload("image")(files)}
-        onVideoUpload={(files) => handleMediaUpload("video")(files)}
+        onImageUpload={(files) =>
+          handleMediaUpload("image")(files)
+        }
+        onVideoUpload={(files) =>
+          handleMediaUpload("video")(files)
+        }
         onDelete={(index, type) => {
-          const isExistingFile = index < (type === 'image' ? existingMedia.images.length : existingMedia.videos.length);
-          
+          const isExistingFile =
+            index <
+            (type === "image"
+              ? existingMedia.images.length
+              : existingMedia.videos.length);
+
           if (isExistingFile) {
-            setExistingMedia(prev => ({
+            setExistingMedia((prev) => ({
               ...prev,
-              [type === 'image' ? 'images' : 'videos']: prev[type === 'image' ? 'images' : 'videos'].filter((_, i) => i !== index)
+              [type === "image" ? "images" : "videos"]:
+                prev[
+                  type === "image" ? "images" : "videos"
+                ].filter((_, i) => i !== index),
             }));
           } else {
-            const adjustedIndex = index - (type === 'image' ? existingMedia.images.length : existingMedia.videos.length);
+            const adjustedIndex =
+              index -
+              (type === "image"
+                ? existingMedia.images.length
+                : existingMedia.videos.length);
             handleMediaDelete(adjustedIndex, type);
           }
         }}
@@ -434,13 +572,6 @@ function EditCms() {
 
       {/* Form Actions */}
       <div className="flex flex-col justify-between items-center pb-8 gap-4">
-        {/* Root level errors */}
-        {form.formState.errors.root && (
-          <p className="text-red-500 text-sm">
-            {form.formState.errors.root.message}
-          </p>
-        )}
-
         {/* Submit button */}
         <Button
           placeholder={
