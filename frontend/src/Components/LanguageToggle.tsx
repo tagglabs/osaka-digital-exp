@@ -10,7 +10,7 @@ const LanguageToggle: React.FC<LanguageToggleProps> = ({
   onToggle,
 }) => {
   return (
-    <div className="absolute top-4 right-8 z-50 bg-white shadow-md rounded-md">
+    <div className="fixed top-4 right-8 z-50 bg-white shadow-md rounded-md">
       <button
         type="button"
         onClick={onToggle}
