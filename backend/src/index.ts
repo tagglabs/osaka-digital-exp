@@ -16,6 +16,14 @@ app.use(express.urlencoded({ extended: true }));
 app.use("/api", artifactRoutes);
 app.use("/api/admin", adminRoutes);
 
+app.post("/api/test", (req, res) => {
+  console.log("Received test request:", req.body);
+  res.status(200).json({ message: "Test successful" });
+});
+
+app.post("/api/test2", (req, res) => {
+  res.status(200).json({ message: "Test2 successful" });
+});
 // Custom error type
 interface AppError extends Error {
   status?: number;
@@ -60,7 +68,7 @@ const startServer = async () => {
 
     app.listen(serverConfig.port, () => {
       console.log(
-        `Server running in ${serverConfig.nodeEnv} mode on port ${serverConfig.port}`
+        `Server running in ${serverConfig.nodeEnv} mode on port ${serverConfig.port}`,
       );
       console.log(`Base URL: ${serverConfig.baseUrl}`);
     });
