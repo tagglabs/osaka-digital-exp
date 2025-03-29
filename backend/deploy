@@ -1,0 +1,61 @@
+#!/bin/bash
+set -e # Exit immediately if a command exits with a non-zero status
+set -o pipefail # Return the exit status of the last command in the pipe that returned a non-zero return value
+
+usage="Usage: $0 <user@hostname>|<hostname>|<ssh-config-alias> app_name"
+
+if [ -z "$1" ] || [ -z "$1" ]; then
+    echo $usage
+    exit 1
+fi
+
+# Validate if the value for $1 is correct
+# Check if the value is a valid ssh-config-alias
+valid=false
+if [[ "$1" = *.* ]] || [[ "$1" = *@*:* ]] || [[ '$(grep -e "Host $1" ~/.ssh/config)' ]]; then
+    valid=true
+fi
+
+
+if [ "$valid" = false ]; then
+    echo $usage
+    echo "Invalid hostname: $1"
+    exit 1
+fi
+
+echo "Building..."
+npm run build
+
+ssh $1 "mkdir -p apps/$2"
+
+echo "Uploading package.json & package-lock.json..."
+scp package.json $1:apps/$2/.
+scp package-lock.json $1:apps/$2/.
+
+echo "Installing dependencies on server..."
+ssh $1 "cd apps/$2 && NODE_ENV=production npm ci"
+
+echo "Uploading $2..."
+temp_dist_folder="/tmp/dist-$(date +%s)"
+scp -r dist $1:$temp_dist_folder
+
+# image_path="./uploads/emailer.png"
+# font_path="./uploads/font.txt"
+
+# echo "Uploading image and font from ./uploads to remote uploads folder..."
+
+# scp $image_path $font_path $1:apps/$2/uploads/.
+
+
+echo "Moving temporary folders to $2..."
+ssh $1 "rm -rf apps/$2/dist && mv $temp_dist_folder apps/$2/dist"
+
+ssh -t $1 "
+if pm2 list | grep -v "^\[PM2\]" | grep -q "$2"; then
+    echo "App is running in pm2, restarting..."
+    source .profile && pm2 restart --update-env $2
+else
+    echo \"App is not running in pm2, starting...\"
+    source .profile && pm2 start dist/index.js --name $2 --cwd apps/$2 -i max && pm2 save
+fi
+"

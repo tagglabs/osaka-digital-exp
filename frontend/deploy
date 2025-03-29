@@ -1,0 +1,40 @@
+#!/bin/bash
+
+usage="Usage: $0 <user@hostname>|<hostname>|<ssh-config-alias> <deployment-path>"
+
+if [ -z "$1" ] || [ -z "$2" ]; then
+    echo $usage
+    exit 1
+fi
+
+# Validate if the value for $2 is correct
+# Check if the value is a valid ssh-config-alias
+valid=false
+if [[ "$1" = *.* ]] || [[ "$1" = *@*:* ]] || [[ '$(grep -e "Host $1" ~/.ssh/config)' ]]; then
+    valid=true
+fi
+
+if [ "$valid" = false ]; then
+    echo $usage
+    echo "Invalid hostname: $1"
+    exit 1
+fi
+
+# Validate if $2 is a valid deployment path
+if [ "$2" != "/" ] && [[ "$2" != /* ]]; then
+    echo $usage
+    echo "Invalid deployment path: $2"
+    exit 1
+fi
+
+echo "Installing dependencies without modifying lockfile..."
+npm install --frozen-lockfile
+
+echo "Building..."
+npm run build
+
+echo "Deploying..."
+
+temp_folder="/tmp/dist-$(date +%s)"
+scp -r dist $1:$temp_folder
+ssh -t $1 "sudo rm -rf $2 && sudo mv $temp_folder $2"

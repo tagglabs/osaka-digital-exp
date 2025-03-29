@@ -29,7 +29,8 @@ export function AuthProvider({
   });
 
   const login = (email: string): boolean => {
-    const adminEmail = import.meta.env.VITE_ADMIN_EMAIL;
+    const adminEmail = import.meta.env
+      .OSAKAARTIFACT25_CMS_VITE_ADMIN_EMAIL;
 
     if (email === adminEmail) {
       setAuth(true);

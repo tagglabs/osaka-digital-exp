@@ -4,42 +4,38 @@ import { S3Client } from "@aws-sdk/client-s3";
 // Load environment variables
 dotenv.config();
 
-// Validate required environment variables
-const requiredEnvVars = [
-  "PORT",
-  "NODE_ENV",
-  "MONGODB_URI",
-  "AWS_ACCESS_KEY_ID",
-  "AWS_SECRET_ACCESS_KEY",
-  "AWS_REGION",
-  "AWS_BUCKET_NAME",
-  "CORS_ORIGIN",
-] as const;
+// // Validate required environment variables
+// const requiredEnvVars = [
+//   "OSAKAARTIFACT25_CMS_PORT",
+//   "OSAKAARTIFACT25_CMS_NODE_ENV",
+//   "OSAKAARTIFACT25_CMS_MONGODB_URI",
+//   "OSAKAARTIFACT25_CMS_AWS_ACCESS_KEY_ID",
+//   "OSAKAARTIFACT25_CMS_AWS_SECRET_ACCESS_KEY",
+//   "OSAKAARTIFACT25_CMS_AWS_REGION",
+//   "OSAKAARTIFACT25_CMS_AWS_BUCKET_NAME",
+//   "OSAKAARTIFACT25_CMS_CORS_ORIGIN",
+// ] as const;
 
-// Check for missing environment variables
-const missingVars = requiredEnvVars.filter(
-  (varName) => !process.env[varName],
-);
-if (missingVars.length > 0) {
-  throw new Error(
-    `Missing required environment variables: ${missingVars.join(
-      ", ",
-    )}`,
-  );
-}
+// // Check for missing environment variables
+// const missingVars = requiredEnvVars.filter((varName) => !process.env[varName]);
+// if (missingVars.length > 0) {
+//   throw new Error(
+//     `Missing required environment variables: ${missingVars.join(", ")}`,
+//   );
+// }
 
 // Server configuration
 export const serverConfig = {
-  port: process.env.PORT || 3000,
-  nodeEnv: process.env.NODE_ENV || "development",
+  port: process.env.OSAKAARTIFACT25_CMS_PORT || 3015,
+  nodeEnv: process.env.OSAKAARTIFACT25_CMS_NODE_ENV || "development",
   baseUrl:
-    process.env.BASE_URL ||
-    `http://localhost:${process.env.PORT || 3000}`,
+    process.env.OSAKAARTIFACT25_CMS_BASE_URL ||
+    `http://localhost:${process.env.OSAKAARTIFACT25_CMS_PORT || 3015}`,
 };
 
 // MongoDB configuration
 export const mongoConfig = {
-  uri: process.env.MONGODB_URI as string,
+  uri: "mongodb+srv://ita_b1:VrwhHmKTDAsllELL@serverless2024.mvuamon.mongodb.net/osaka25-artifact-cms?retryWrites=true&w=majority&appName=osaka25-artifact-cms",
   options: {
     useNewUrlParser: true,
     useUnifiedTopology: true,
@@ -49,12 +45,12 @@ export const mongoConfig = {
 // AWS S3 configuration
 export const s3Config = {
   credentials: {
-    accessKeyId: process.env.AWS_ACCESS_KEY_ID as string,
+    accessKeyId: process.env.OSAKAARTIFACT25_CMS_AWS_ACCESS_KEY_ID as string,
     secretAccessKey: process.env
-      .AWS_SECRET_ACCESS_KEY as string,
+      .OSAKAARTIFACT25_CMS_AWS_SECRET_ACCESS_KEY as string,
   },
-  region: process.env.AWS_REGION as string,
-  bucketName: process.env.AWS_BUCKET_NAME as string,
+  region: process.env.OSAKAARTIFACT25_CMS_AWS_REGION as string,
+  bucketName: process.env.OSAKAARTIFACT25_CMS_AWS_BUCKET_NAME as string,
 };
 
 // Create S3 client instance
@@ -66,26 +62,17 @@ export const s3Client = new S3Client({
 // CORS configuration
 export const corsConfig = {
   origin:
-    process.env.CORS_ORIGIN || "http://localhost:5173",
+    process.env.OSAKAARTIFACT25_CMS_CORS_ORIGIN || "http://localhost:5173",
   credentials: true,
 };
 
 // File upload configuration
 export const uploadConfig = {
   maxFileSize: 100 * 1024 * 1024, // 100MB
-  allowedImageTypes: [
-    "image/jpeg",
-    "image/png",
-    "image/webp",
-  ],
+  allowedImageTypes: ["image/jpeg", "image/png", "image/webp"],
   allowedVideoTypes: ["video/mp4", "video/webm"],
   allowedPdfTypes: ["application/pdf"],
-  allowedAudioTypes: [
-    "audio/mpeg",
-    "audio/wav",
-    "audio/ogg",
-    "audio/mp3",
-  ],
+  allowedAudioTypes: ["audio/mpeg", "audio/wav", "audio/ogg", "audio/mp3"],
 };
 
 // API paths configuration
