@@ -1,13 +1,9 @@
 import express from "express";
 import cors from "cors";
 import mongoose from "mongoose";
-import {
-  serverConfig,
-  corsConfig,
-  mongoConfig,
-  errorMessages,
-} from "./config";
+import { serverConfig, corsConfig, mongoConfig, errorMessages } from "./config";
 import artifactRoutes from "./routes/artifact.routes";
+import adminRoutes from "./routes/admin.routes";
 
 const app = express();
 
@@ -18,6 +14,7 @@ app.use(express.urlencoded({ extended: true }));
 
 // Routes
 app.use("/api", artifactRoutes);
+app.use("/api/admin", adminRoutes);
 
 // Custom error type
 interface AppError extends Error {
@@ -25,39 +22,30 @@ interface AppError extends Error {
 }
 
 // Error handling middleware
-app.use(
-  (
-    err: AppError,
-    req: express.Request,
-    res: express.Response,
-  ) => {
-    console.error("Error:", {
-      name: err.name,
-      message: err.message,
-      stack:
-        serverConfig.nodeEnv === "development"
-          ? err.stack
-          : undefined,
-    });
+app.use((err: AppError, req: express.Request, res: express.Response) => {
+  console.error("Error:", {
+    name: err.name,
+    message: err.message,
+    stack: serverConfig.nodeEnv === "development" ? err.stack : undefined,
+  });
 
-    const statusCode = err.status || 500;
-    const message =
-      statusCode === 500
-        ? serverConfig.nodeEnv === "production"
-          ? errorMessages.SERVER_ERROR
-          : err.message
-        : err.message;
+  const statusCode = err.status || 500;
+  const message =
+    statusCode === 500
+      ? serverConfig.nodeEnv === "production"
+        ? errorMessages.SERVER_ERROR
+        : err.message
+      : err.message;
 
-    res.status(statusCode).json({
-      error: {
-        message,
-        ...(serverConfig.nodeEnv === "development" && {
-          stack: err.stack,
-        }),
-      },
-    });
-  },
-);
+  res.status(statusCode).json({
+    error: {
+      message,
+      ...(serverConfig.nodeEnv === "development" && {
+        stack: err.stack,
+      }),
+    },
+  });
+});
 
 // 404 handler
 app.use((req: express.Request, res: express.Response) => {
@@ -72,7 +60,7 @@ const startServer = async () => {
 
     app.listen(serverConfig.port, () => {
       console.log(
-        `Server running in ${serverConfig.nodeEnv} mode on port ${serverConfig.port}`,
+        `Server running in ${serverConfig.nodeEnv} mode on port ${serverConfig.port}`
       );
       console.log(`Base URL: ${serverConfig.baseUrl}`);
     });
