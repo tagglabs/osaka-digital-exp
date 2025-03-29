@@ -6,7 +6,9 @@ export default defineConfig({
   server: {
     proxy: {
       "/api": {
-        target: "https://b1.tagg.live/osaka25-artifact-cms",
+        target:
+          process.env.VITE_BACKEND_URL ||
+          "https://b1.tagg.live/osaka25-artifact-cms",
         changeOrigin: true,
       },
     },
