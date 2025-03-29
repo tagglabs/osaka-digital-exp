@@ -21,7 +21,7 @@ function App() {
             path="*"
             element={
               <ProtectedRoute>
-                <Cms />
+                <Dashboard />
               </ProtectedRoute>
             }
           />

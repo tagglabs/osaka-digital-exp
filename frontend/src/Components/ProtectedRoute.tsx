@@ -29,13 +29,13 @@ const LoadingSpinner = () => (
 
 const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
   const { auth, isLoading, error } = useAuth();
-  const [showModal, setShowModal] = useState(!auth);
+  const [showModal, setShowModal] = useState(!auth.isAuthenticated);
 
   useEffect(() => {
-    if (!auth) {
+    if (!auth.isAuthenticated) {
       setShowModal(true);
     }
-  }, [auth]);
+  }, [auth.isAuthenticated]);
 
   if (isLoading) {
     return (
@@ -45,7 +45,7 @@ const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
     );
   }
 
-  if (!auth) {
+  if (!auth.isAuthenticated) {
     return (
       <div className="relative min-h-screen">
         <AuthModal
