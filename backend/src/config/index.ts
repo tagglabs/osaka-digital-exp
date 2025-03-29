@@ -37,7 +37,7 @@ export const serverConfig = {
 export const mongoConfig = {
   uri:
     process.env.OSAKAARTIFACT25_CMS_MONGODB_URI ||
-    "mongodb+srv://ita_b1:VrwhHmKTDAsllELL@serverless2024.mvuamon.mongodb.net/osaka25-artifact-cms?retryWrites=true&w=majority&appName=osaka25-artifact-cms",
+    "mongodb://localhost:27017/osaka-digital",
   options: {
     useNewUrlParser: true,
     useUnifiedTopology: true,
