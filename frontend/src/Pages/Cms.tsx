@@ -23,6 +23,7 @@ function Cms() {
     toggleLanguage,
     addNewSection,
     handleSectionChange,
+    deleteSection,
     profilePreview,
     pdfs,
     mediaFiles,
@@ -81,6 +82,7 @@ function Cms() {
           activeSection={activeSection}
           onChange={handleSectionChange}
           onAdd={addNewSection}
+          onDelete={deleteSection}
           error={errors.sections?.[activeSection]?.message}
           language={language}
         />

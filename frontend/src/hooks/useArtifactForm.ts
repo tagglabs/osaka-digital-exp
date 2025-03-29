@@ -246,6 +246,31 @@ export const useArtifactForm = () => {
     ]);
   };
 
+  const deleteSection = (index: number) => {
+    // Cannot delete the Overview section (index 0)
+    if (index === 0) return;
+    
+    // Remove the section
+    const newSections = sections.filter((_, i) => i !== index);
+    setSections(newSections);
+    
+    // Update active section if needed
+    if (activeSection >= index) {
+      setActiveSection(Math.max(0, activeSection - 1));
+    }
+    
+    // Update form value
+    setValue("sections", [
+      newSections[0] || {
+        title: "Overview",
+        titleJap: "概要",
+        content: "",
+        contentJap: "",
+      },
+      ...newSections.slice(1),
+    ]);
+  };
+
   // Form submission handler
   const onSubmit = async (data: FormData) => {
     console.log("Submitting form data:", data);
@@ -339,7 +364,7 @@ export const useArtifactForm = () => {
 
       // Submit to artifacts API
       const response = await axios.post<ArtifactResponse>(
-        "/api/artifacts",
+        `${import.meta.env.VITE_BACKEND_URL}/api/artifacts`,
         submissionData,
       );
 
@@ -392,6 +417,7 @@ export const useArtifactForm = () => {
     activeSection,
     addNewSection,
     handleSectionChange,
+    deleteSection,
 
     // File management
     profilePreview: uploadedFiles.profilePicture

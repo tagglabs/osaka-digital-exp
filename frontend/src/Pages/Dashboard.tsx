@@ -32,7 +32,10 @@ const ArtifactPreview = ({
       <div className="flex items-start gap-4 flex-grow">
         <div className="w-[100px] h-[100px] rounded-md overflow-hidden flex-shrink-0">
           <img
-            src={profilePicture?.fileURL || '/placeholder-image.jpg'}
+            src={
+              profilePicture?.fileURL ||
+              "/placeholder-image.jpg"
+            }
             alt={artifactName}
             className="w-full h-full object-cover"
           />
@@ -40,11 +43,17 @@ const ArtifactPreview = ({
         <div className="flex flex-col flex-grow">
           <div className="flex justify-between items-start w-full">
             <div>
-              <p className="text-sm text-gray-primary uppercase mb-1">{zoneName}</p>
-              <h3 className="text-lg font-semibold mb-2">{artifactName}</h3>
+              <p className="text-sm text-gray-primary uppercase mb-1">
+                {zoneName}
+              </p>
+              <h3 className="text-lg font-semibold mb-2">
+                {artifactName}
+              </h3>
             </div>
           </div>
-          <p className="text-gray-600 text-sm line-clamp-2">{description}</p>
+          <p className="text-gray-600 text-sm line-clamp-2">
+            {description}
+          </p>
         </div>
       </div>
       <div className="flex items-center gap-4 ml-4">
@@ -71,7 +80,11 @@ const ArtifactPreview = ({
           onClick={() => onDelete(id)}
           className="p-2 hover:bg-gray-100 rounded-full"
         >
-          <img src={Trash} alt="delete" className="w-5 h-5" />
+          <img
+            src={Trash}
+            alt="delete"
+            className="w-5 h-5"
+          />
         </button>
       </div>
     </div>
@@ -85,10 +98,15 @@ interface APIArtifact extends FormData {
 
 export const Dashboard = () => {
   const navigate = useNavigate();
-  const [artifacts, setArtifacts] = useState<APIArtifact[]>([]);
+  const [artifacts, setArtifacts] = useState<APIArtifact[]>(
+    [],
+  );
   const [loading, setLoading] = useState(true);
-  const [showDeleteModal, setShowDeleteModal] = useState(false);
-  const [deleteItemId, setDeleteItemId] = useState<string | null>(null);
+  const [showDeleteModal, setShowDeleteModal] =
+    useState(false);
+  const [deleteItemId, setDeleteItemId] = useState<
+    string | null
+  >(null);
 
   const handleDeleteClick = (id: string) => {
     setDeleteItemId(id);
@@ -99,11 +117,19 @@ export const Dashboard = () => {
     if (!deleteItemId) return;
 
     try {
-      const response = await axios.delete(`/api/artifacts/${deleteItemId}`);
-      
+      const response = await axios.delete(
+        `${
+          import.meta.env.VITE_BACKEND_URL
+        }/api/artifacts/${deleteItemId}`,
+      );
+
       // Status 204 indicates successful deletion with no content
       if (response.status === 204) {
-        setArtifacts(artifacts.filter(artifact => artifact.id !== deleteItemId));
+        setArtifacts(
+          artifacts.filter(
+            (artifact) => artifact.id !== deleteItemId,
+          ),
+        );
         toast.success("Artifact deleted successfully");
       }
     } catch (err) {
@@ -112,7 +138,9 @@ export const Dashboard = () => {
         if (err.response?.status === 404) {
           toast.error("Artifact not found");
         } else {
-          toast.error("Failed to delete artifact. Please try again.");
+          toast.error(
+            "Failed to delete artifact. Please try again.",
+          );
         }
       } else {
         toast.error("An unexpected error occurred");
@@ -131,7 +159,11 @@ export const Dashboard = () => {
   useEffect(() => {
     const fetchArtifacts = async () => {
       try {
-        const response = await axios.get<APIArtifact[]>("/api/artifacts");
+        const response = await axios.get<APIArtifact[]>(
+          `${
+            import.meta.env.VITE_BACKEND_URL
+          }/api/artifacts`,
+        );
         if (response.data) {
           setArtifacts(response.data);
         } else {
@@ -158,11 +190,13 @@ export const Dashboard = () => {
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold">Artifacts Gallery</h1>
+        <h1 className="text-2xl font-bold">
+          Artifacts Gallery
+        </h1>
         <Button
           placeholder="New Artifact"
           type="button"
-          onClick={() => navigate('/cms')}
+          onClick={() => navigate("/cms")}
           showIcon
         />
       </div>
@@ -187,7 +221,9 @@ export const Dashboard = () => {
         title="Delete Artifact"
       >
         <div className="p-4">
-          <p className="mb-4">Are you sure you want to delete this artifact?</p>
+          <p className="mb-4">
+            Are you sure you want to delete this artifact?
+          </p>
           <div className="flex justify-end gap-4">
             <button
               onClick={handleDeleteCancel}
