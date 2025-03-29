@@ -2,7 +2,6 @@ import { Button } from "../Components/Button";
 import { Input } from "../Components/Input";
 import { Section } from "../Components/Section";
 import LanguageToggle from "../Components/LanguageToggle";
-import { ExclamationCircleIcon } from "@heroicons/react/24/solid";
 import { useArtifactForm } from "../hooks/useArtifactForm";
 import ArtifactDetails from "../Components/ArtifactDetails";
 import DocumentUploads from "../Components/DocumentUploads";
