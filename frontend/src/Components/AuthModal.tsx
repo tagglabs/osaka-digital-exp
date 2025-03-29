@@ -11,16 +11,13 @@ interface AuthModalProps {
 
 const AuthModal = ({ isOpen, onClose }: AuthModalProps) => {
   const [email, setEmail] = useState("");
-  const [error, setError] = useState("");
-  const { login } = useAuth();
+  const { login, isLoading, error: authError } = useAuth();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const success = login(email);
+    const success = await login(email);
     if (success) {
       onClose();
-    } else {
-      setError("Invalid administrator email");
     }
   };
 
@@ -33,13 +30,14 @@ const AuthModal = ({ isOpen, onClose }: AuthModalProps) => {
           placeholder="Enter your email address"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
-          error={error}
+          error={authError || undefined}
           required
         />
         <div className="flex justify-center">
           <Button
             type="submit"
-            placeholder="Login"
+            placeholder={isLoading ? "Loading..." : "Login"}
+            disabled={isLoading}
           />
         </div>
       </form>
