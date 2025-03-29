@@ -23,10 +23,12 @@ const LockIcon = () => (
   </svg>
 );
 
-const ProtectedRoute = ({
-  children,
-}: ProtectedRouteProps) => {
-  const { auth } = useAuth();
+const LoadingSpinner = () => (
+  <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-700" />
+);
+
+const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
+  const { auth, isLoading, error } = useAuth();
   const [showModal, setShowModal] = useState(!auth);
 
   useEffect(() => {
@@ -34,6 +36,14 @@ const ProtectedRoute = ({
       setShowModal(true);
     }
   }, [auth]);
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <LoadingSpinner />
+      </div>
+    );
+  }
 
   if (!auth) {
     return (
@@ -44,16 +54,19 @@ const ProtectedRoute = ({
         />
         {/* Overlay with styled content */}
         <div className="absolute inset-0 flex flex-col items-center justify-center z-10 bg-gray-50/95">
-          <div className=" flex flex-col justify-center items-center text-center p-8 rounded-lg max-w-md">
+          <div className="flex flex-col justify-center items-center text-center p-8 rounded-lg max-w-md">
             <LockIcon />
             <h2 className="text-2xl font-semibold text-gray-800 mb-2">
               Access Denied
             </h2>
             <p className="text-gray-600 mb-6">
-              This is a protected area. Please login
-              with your administrator email to access this
-              page.
+              This is a protected area. Please login with your administrator email to access this page.
             </p>
+            {error && (
+              <div className="text-red-500 text-sm font-medium mb-4">
+                {error}
+              </div>
+            )}
             <Button
               placeholder="Login"
               onClick={() => setShowModal(true)}

@@ -35,7 +35,9 @@ export const serverConfig = {
 
 // MongoDB configuration
 export const mongoConfig = {
-  uri: "mongodb+srv://ita_b1:VrwhHmKTDAsllELL@serverless2024.mvuamon.mongodb.net/osaka25-artifact-cms?retryWrites=true&w=majority&appName=osaka25-artifact-cms",
+  uri:
+    process.env.OSAKAARTIFACT25_CMS_MONGODB_URI ||
+    "mongodb+srv://ita_b1:VrwhHmKTDAsllELL@serverless2024.mvuamon.mongodb.net/osaka25-artifact-cms?retryWrites=true&w=majority&appName=osaka25-artifact-cms",
   options: {
     useNewUrlParser: true,
     useUnifiedTopology: true,

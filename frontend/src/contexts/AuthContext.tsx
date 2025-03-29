@@ -1,14 +1,18 @@
+import axios from "axios";
 import {
   createContext,
   useContext,
   useState,
+  useEffect,
   ReactNode,
 } from "react";
 
 interface AuthContextType {
   auth: boolean;
+  isLoading: boolean;
+  error: string | null;
   setAuth: (auth: boolean) => void;
-  login: (email: string) => boolean;
+  login: (email: string) => Promise<boolean>;
   logout: () => void;
 }
 
@@ -23,30 +27,71 @@ const AuthContext = createContext<
 export function AuthProvider({
   children,
 }: AuthProviderProps) {
-  const [auth, setAuth] = useState(() => {
-    const storedAuth = localStorage.getItem("authToken");
-    return storedAuth === "true";
-  });
+  const [auth, setAuth] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  const login = (email: string): boolean => {
-    const adminEmail = import.meta.env
-      .OSAKAARTIFACT25_CMS_VITE_ADMIN_EMAIL;
+  useEffect(() => {
+    const validateStoredToken = async () => {
+      const storedAuth = localStorage.getItem("authToken");
+      if (!storedAuth) {
+        setIsLoading(false);
+        return;
+      }
 
-    if (email === adminEmail) {
-      setAuth(true);
-      localStorage.setItem("authToken", "true");
-      return true;
+      try {
+        const response = await axios.post(
+          "http://localhost:3000/api/admin/auth",
+          {"email":storedAuth},
+        );
+        setAuth(response.data === true);
+      } catch (err) {
+        setError("Failed to validate authentication");
+        setAuth(false);
+        localStorage.removeItem("authToken");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    validateStoredToken();
+  }, []);
+
+  const login = async (email: string): Promise<boolean> => {
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      const response = await axios.post(
+        "http://localhost:3000/api/admin/auth",
+        {"email":email},
+      );
+      const isAuthenticated = response.data === true;
+
+      if (isAuthenticated) {
+        setAuth(true);
+        localStorage.setItem("authToken", email);
+        return true;
+      }
+      return false;
+    } catch (err) {
+      setError("Login failed. Please try again.");
+      return false;
+    } finally {
+      setIsLoading(false);
     }
-    return false;
   };
 
   const logout = () => {
     setAuth(false);
+    setError(null);
     localStorage.removeItem("authToken");
   };
 
   const value = {
     auth,
+    isLoading,
+    error,
     setAuth,
     login,
     logout,
