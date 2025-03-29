@@ -38,8 +38,16 @@ export const useArtifactForm = () => {
   // Form state
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [activeSection, setActiveSection] = useState(0);
+  const [language, setLanguage] = useState<"en" | "jp">(
+    "en",
+  );
   const [sections, setSections] = useState<SectionType[]>([
-    { title: "Overview", content: "" },
+    {
+      title: "Overview",
+      titleJap: "概要",
+      content: "",
+      contentJap: "",
+    },
   ]);
   const [referenceLinks, setReferenceLinks] = useState<
     string[]
@@ -91,8 +99,17 @@ export const useArtifactForm = () => {
     defaultValues: {
       zoneName: undefined,
       artifactName: "",
+      artifactNameJap: "",
       description: "",
-      sections: [{ title: "Overview", content: "" }],
+      descriptionJap: "",
+      sections: [
+        {
+          title: "Overview",
+          titleJap: "概要",
+          content: "",
+          contentJap: "",
+        },
+      ],
       pdfs: [],
       mediaGallery: [],
       audioGuide: undefined,
@@ -182,10 +199,19 @@ export const useArtifactForm = () => {
   };
 
   // Section handlers
+  const toggleLanguage = () => {
+    setLanguage((prev) => (prev === "en" ? "jp" : "en"));
+  };
+
   const addNewSection = () => {
     const newSections = [
       ...sections,
-      { title: "Untitled", content: "" },
+      {
+        title: "Untitled",
+        titleJap: "無題",
+        content: "",
+        contentJap: "",
+      },
     ];
     setSections(newSections);
     setActiveSection(newSections.length - 1);
@@ -195,14 +221,27 @@ export const useArtifactForm = () => {
     index: number,
     title: string,
     content: string,
+    titleJap?: string,
+    contentJap?: string,
   ) => {
     const newSections = [...sections];
-    newSections[index] = { title, content };
+    newSections[index] = {
+      ...newSections[index],
+      title,
+      content,
+      ...(titleJap && { titleJap }),
+      ...(contentJap && { contentJap }),
+    };
     setSections(newSections);
     setActiveSection(index);
     // Ensure it matches the tuple schema [first, ...rest]
     setValue("sections", [
-      sections[0] || { title: "Overview", content: "" },
+      sections[0] || {
+        title: "Overview",
+        titleJap: "概要",
+        content: "",
+        contentJap: "",
+      },
       ...sections.slice(1),
     ]);
   };
@@ -228,17 +267,25 @@ export const useArtifactForm = () => {
       const submissionData: FormData = {
         zoneName: data.zoneName,
         artifactName: data.artifactName.trim(),
+        artifactNameJap: data.artifactNameJap?.trim() || "",
         description: data.description.trim(),
+        descriptionJap: data.descriptionJap?.trim() || "",
         sections: [
           // Ensure at least one section exists
           {
             title: sections[0]?.title.trim() || "Overview",
+            titleJap:
+              sections[0]?.titleJap?.trim() || "概要",
             content: sections[0]?.content.trim() || "",
+            contentJap:
+              sections[0]?.contentJap?.trim() || "",
           },
           // Add remaining sections
           ...sections.slice(1).map((section) => ({
             title: section.title.trim(),
+            titleJap: section.titleJap?.trim() || "",
             content: section.content.trim(),
+            contentJap: section.contentJap?.trim() || "",
           })),
         ],
         pdfs: uploadResult.pdfs.map((file) => ({
@@ -305,7 +352,14 @@ export const useArtifactForm = () => {
 
       // Reset form state
       reset();
-      setSections([{ title: "Overview", content: "" }]);
+      setSections([
+        {
+          title: "Overview",
+          titleJap: "概要",
+          content: "",
+          contentJap: "",
+        },
+      ]);
       uploadManager.reset();
       setActiveSection(0);
 
@@ -328,6 +382,10 @@ export const useArtifactForm = () => {
     errors,
     isSubmitting,
     handleSubmit: handleSubmit(onSubmit),
+
+    // Language control
+    language,
+    toggleLanguage,
 
     // Section management
     sections,

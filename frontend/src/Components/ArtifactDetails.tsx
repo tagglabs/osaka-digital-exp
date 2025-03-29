@@ -13,6 +13,7 @@ interface ArtifactDetailsProps {
   errors: FieldErrors<FormData>;
   onProfileUpload: (files: File[]) => void;
   profilePreview: string | null;
+  language: "en" | "jp";
 }
 
 const ArtifactDetails: React.FC<ArtifactDetailsProps> = ({
@@ -20,6 +21,7 @@ const ArtifactDetails: React.FC<ArtifactDetailsProps> = ({
   errors,
   onProfileUpload,
   profilePreview,
+  language,
 }) => {
   return (
     <div>
@@ -45,17 +47,44 @@ const ArtifactDetails: React.FC<ArtifactDetailsProps> = ({
               "zone9",
             ]}
           />
+          {/* English Inputs */}
           <Input
-            label="Enter artifact name *"
+            label="Enter artifact name (English) *"
             placeholder="Enter artifact name"
             {...register("artifactName")}
             error={errors.artifactName?.message}
+            style={{
+              display: language === "en" ? "block" : "none",
+            }}
           />
           <Input
-            label="Enter description *"
+            label="Enter description (English) *"
             placeholder="Enter description"
             {...register("description")}
             error={errors.description?.message}
+            style={{
+              display: language === "en" ? "block" : "none",
+            }}
+          />
+
+          {/* Japanese Inputs */}
+          <Input
+            label="Enter artifact name (Japanese)"
+            placeholder="名前を入力してください"
+            {...register("artifactNameJap")}
+            error={errors.artifactNameJap?.message}
+            style={{
+              display: language === "jp" ? "block" : "none",
+            }}
+          />
+          <Input
+            label="Enter description (Japanese)"
+            placeholder="説明を入力してください"
+            {...register("descriptionJap")}
+            error={errors.descriptionJap?.message}
+            style={{
+              display: language === "jp" ? "block" : "none",
+            }}
           />
         </div>
         <div className="w-1/2 h-full">

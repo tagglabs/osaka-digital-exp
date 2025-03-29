@@ -1,6 +1,7 @@
 import { Button } from "../Components/Button";
 import { Input } from "../Components/Input";
 import { Section } from "../Components/Section";
+import LanguageToggle from "../Components/LanguageToggle";
 import { ExclamationCircleIcon } from "@heroicons/react/24/solid";
 import { useArtifactForm } from "../hooks/useArtifactForm";
 import ArtifactDetails from "../Components/ArtifactDetails";
@@ -19,6 +20,8 @@ function Cms() {
     handleSubmit,
     sections,
     activeSection,
+    language,
+    toggleLanguage,
     addNewSection,
     handleSectionChange,
     profilePreview,
@@ -45,14 +48,22 @@ function Cms() {
   return (
     <form
       onSubmit={handleSubmit}
-      className="flex flex-col h-screen w-screen p-10 gap-10 px-20"
+      className="flex flex-col h-screen w-screen p-10 gap-10 px-20 relative"
     >
       {/* Artifact Details Section */}
+      {/* Language Toggle */}
+      <LanguageToggle
+        language={language}
+        onToggle={toggleLanguage}
+      />
+
+      {/* Artifact Details */}
       <ArtifactDetails
         register={register}
         errors={errors}
         onProfileUpload={handleProfilePicture}
         profilePreview={profilePreview}
+        language={language}
       />
 
       {/* Sections */}
@@ -64,11 +75,16 @@ function Cms() {
         </div>
 
         <Section
-          sections={sections}
+          sections={sections.map((section) => ({
+            ...section,
+            titleJap: section.titleJap || "",
+            contentJap: section.contentJap || "",
+          }))}
           activeSection={activeSection}
           onChange={handleSectionChange}
           onAdd={addNewSection}
           error={errors.sections?.[activeSection]?.message}
+          language={language}
         />
       </div>
 
