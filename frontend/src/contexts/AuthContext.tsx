@@ -65,10 +65,9 @@ export function AuthProvider({
     setError(null);
 
     try {
-      const response = await axios.post(
-        "http://localhost:3000/api/admin/auth",
-        { email: email },
-      );
+      const response = await axios.post(`/api/admin/auth`, {
+        email: email,
+      });
       const isAuthenticated = response.data === true;
 
       if (isAuthenticated) {
