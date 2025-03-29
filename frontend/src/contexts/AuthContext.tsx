@@ -41,9 +41,12 @@ export function AuthProvider({
 
       try {
         const response = await axios.post(
-          "http://localhost:3000/api/admin/auth",
-          {"email":storedAuth},
+          `/api/admin/auth`,
+          {
+            email: storedAuth,
+          },
         );
+
         setAuth(response.data === true);
       } catch (err) {
         setError("Failed to validate authentication");
@@ -64,7 +67,7 @@ export function AuthProvider({
     try {
       const response = await axios.post(
         "http://localhost:3000/api/admin/auth",
-        {"email":email},
+        { email: email },
       );
       const isAuthenticated = response.data === true;
 
